@@ -1,11 +1,15 @@
-* lines.skip(n: 1).limit(maxSize: 5).map(line -> line.split(",")).collect(groupBy(array -> array[1], counting()));
+* lines.skip(n: 1).limit(maxSize: 5).map(line -> line.split(",")).collect(groupingBy(array -> array[1], counting()));
 这样把整个时间作为了key，会按照秒来分组
 * TreeMap::new
 让groupingBy分的组有序
-* e -> Map.entry(e.getKey(), e.getValue.entrySet().stream().max(Map.Entry.comparingByValue()
+* e -> Map.entry(e.getKey(), e.getValue.entrySet().stream().max(Map.Entry.comparingByValue()))
 1. e -> Map.entry将e转为map
 2. e.getValue.entrySet().stream().max(Map.Entry.comparingByValue()
-   将e的值转为流并根据值求最大值
+   将e的值转为流并根据内层map的值求最大值
+* groupingBy(array -> {String c = array[CATEGORY_CODE]; int idx = c.indexOf("."); return c.substring(0, idx); }, TreeMap::new, counting())
+groupingBy的参数是一个函数，转化大类别为小类别
+* "%-12s%-15s%s%n"
+printf %n表示换行
 * 三种map的区别
 1. 流.map(Function)
    将流的每个元素转换成另一种元素
@@ -36,12 +40,12 @@
 * 统计分析
 ** 统计订单
 - 每月销售量
-    #+begin_src java
-      // event_time,order_id,product_id,category_id,    category_code,brand,price,user_id, age, sex, local
-      // 0,2020-04-24 11:50:39 UTC,2294359932054536986,1515966223509089906,2.2681054266481713e+18 electronics.tablet, samsung. 162.01,1.5159156254419
-      Stream<String> lines = Files.lines(Path.of("./data.txt")).twr
-      Map<YearMonth, Long> collect = lines.skip(n: 1).limit(maxSize: 5).map(line -> line.split(",")).collect(groupingBy(array -> YearMonth.from(formatter.parse(array[1])), TreeMap::new, counting()));
-   #+end_src
+  #+begin_src java
+    // event_time,order_id,product_id,category_id,    category_code,brand,price,user_id, age, sex, local
+    // 0,2020-04-24 11:50:39 UTC,2294359932054536986,1515966223509089906,2.2681054266481713e+18 electronics.tablet, samsung. 162.01,1.5159156254419
+    Stream<String> lines = Files.lines(Path.of("./data.txt")).twr
+        Map<YearMonth, Long> collect = lines.skip(n: 1).limit(maxSize: 5).map(line -> line.split(",")).collect(groupingBy(array -> YearMonth.from(formatter.parse(array[1])), TreeMap::new, counting()));
+  #+end_src
   - 销量最高
     #+begin_src java
       Option<Map.Entry<YearMonth, Long>> max = collect.entrySet().stream().max(Comparator.comparingLong(e -> e.getValue()));
@@ -54,9 +58,9 @@
 - 下单最多的前十名用户
   1. 每个用户的下单数
   2. 对值进行降序排序
-   #+begin_src java
-     .collect(groupBy(array -> array[USER_ID], counting())).entrySet().stream().sorted(Map.Entry.<String, Long>comparingByValue().reversed()).limit(10).forEach(System.out::println);
-   #+end_src
+     #+begin_src java
+       .collect(groupingBy(array -> array[USER_ID], counting())).entrySet().stream().sorted(Map.Entry.<String, Long>comparingByValue().reversed()).limit(10).forEach(System.out::println);
+     #+end_src
 - 每个地区下单最多的用户
   1. 每个地区每个用户的下单数
   2. 每个地区用户的最大下单数
@@ -67,10 +71,57 @@
          2  7
        ,*/
        .collect(groupingBy(array -> array[USER_REGION], groupingBy(array -> array[USER_ID], counting())));
-       collect.entrySet().stream().map(e -> Map.entry(e.getKey(), e.getValue.entrySet().stream().max(Map.Entry.comparingByValue())))
-      #+end_src
-  - 每个地区下单最多的前3个用户
-    #+begin_src java
-      collect.entrySet().stream().map(e -> Map.entry(e.getKey(), e.getValue.entrySet().stream().sorted(Map.Entry.comparingByValue().reversed())))
-    #+end_src
+       collect.entrySet().stream().map(e -> Map.entry(e.getKey(), e.getValue.entrySet().stream().max(Map.Entry.comparingByValue())));
+     #+end_src
+  3. 每个地区下单最多的前3个用户
+     1. 排序内层map
+     2. 将内层map转成list方便打印
+     #+begin_src java
+       collect.entrySet().stream().map(e -> Map.entry(e.getKey(), e.getValue.entrySet().stream().sorted(Map.Entry.<String, Long>comparingByValue().reversed().limit(3),collect(toList()))));
+     #+end_src
+- 按一级类别统计销量
+  1. 按类别统计
+  2. 再将作为类别的key截取到.的索引
+  #+begin_src java
+    static String firstCategory(String[] array) {
+        String c = array[CATEGORY_CODE];
+        int idx = c.indexOf(".");
+        return c.substring(0, idx);
+    }
+    .collect(groupingBy(TestData::firstCategory, TreeMap::new, counting()));
+  #+end_src
+- 按价格区间统计销量
+  1. 转换成double类型的价格
+  2. 按价格分组
+  #+begin_src java
+    static String priceRange(Double price) {
+        if(price < 100) {
+    	return "[0, 100]"
+    	    }
+    }
+
+    // [1,100)=111
+    .map(line -> line.split(",")).map(array -> Double.valueOf(array[PRIBE])).collect(groupingBy(TestData::priceRange, counting()));
+  #+end_src
+- 不同年龄段女性所下不同类别订单
+  1. 过滤女性
+  2. 过滤类别非空
+  3. 将arr按照年龄分组
+  4. 再按照一级类别分组
+  #+begin_src java
+    static String ageRange(String[] array) {
+        // user_age=26.0直接转int会报错
+        int age = Double.valueIf(array[USER_AGE].intValue);
+        if (age < 18) {
+    	return "[0, 18]";
+        }
+    }
+    // [0,18)  accessories  11
+    map = .map(line -> line.split(",")).filter(array -> array[USER_SEX].equals("女")).filter(array -> array[CATAGORY_CODE].isEmpty()).collect(groupingBy(TestData::ageRange, groupingBy(TestData::firstCategory, TreeMap::new, counting())));
+    for (e1 : map.entrySet()) {
+        for (e2 : e1.getValue().entrySet()) {
+    	System.out.printf("%-12s%-15s%s%n", e1.getKey(), e2.getKey(), e2.getValue());
+        }
+    }
+  #+end_src
     
