@@ -1,0 +1,78 @@
+* 短信登录(session)
+1. 发送手机验证码
+   1. 校验手机号
+   2. 如果不符合，返回错误信息
+   3. 符合，生成验证码
+   4. 保存验证码到session
+      session.setAttribute("code", code);
+   5. 发送验证码
+2. 短信验证
+   1. 校验手机号
+   2. 从session获取验证码并校验
+      Object cacheCode = session.getAttribute("code");
+   3. 不一致，报错
+   4. 一致，根据手机号查询用户
+   5. 判断用户是否存在
+   6. 不存在，创建新用户并保存
+   7. 保存用户信息到session中
+      session.setAttribute("user", BeanUtil.copyProperties(user, UserDTO.class));
+      将user转换成userDTO，防止密码，手机号泄漏
+      创建session时，自动形成session id写到用户浏览器的cookie里，以后的每次请求都带着cookie，带着session id就找到session了，从中取出数据
+3. 登录校验
+   拦截器，实现 HandlerInterceppter的 preHandle 和 afterCompletion(移除用户) 方法
+   1. 获取session
+   2. 获取session中的用户
+      HttpSession session = request.getSession();
+      Object user = session.getattribute("user");
+   3. 判断用户是否存在
+   4. 不存在，拦截
+   5. 存在，保存用户信息到ThreadLocal中
+* 短信登录(Redis)
+保存验证码到Redis，以手机号为key，读取时，以手机号为key，读取验证码
+保存用户信息Redis，以随机的token为key，把生成的token返回给客户端，前端每次请求都要携带
+1. 保存验证码到redis
+   stringRedisTemplate.opsForValue().set("login:code:" + phone, code, 2, TimeUnit.MINUTES);
+2. 从redis获取验证码并校验
+   String cachecode = stringRedisTemplate.opsForValue().get("login:code:" + phone);
+3. 保存用户信息到redis中
+   1. 随机生成token，作为登录令牌
+      String token = UUID.randomUUID().toString(true);
+   2. 将user对象转为Hash对象存储
+      Map<String, Object> userMap = BeanUtil.beanToMap(userDTO, new HashMap<>(), CopyOptions.create().setIgnoreNullValue(true).setFieldValueEditor(fieldName, fieldValue) -> fieldValue.toString());
+   3. 存储到redis
+      stringRedisTemplate.opsForHash().putAll("login:token:" + token, userMap);
+   4. 设置token有效期
+      stringRedisTemplate.expire("login:token:" + token, 30, TimeUnit.MINUTES)
+   5. 返回token
+4. 拦截器
+   1. 获取请求头中的cookie
+      String token = request.getHeader("authorization");
+   2. 基于token获取redis中的用户
+      Map<Object, Object> userMap = stringRedisTemplate.opsForHash().entries("login:user:" + token);
+   3. 将查询到的Hash数据转为UserDTO对象
+      UserDTO userDTO = BeanUtil.fillBeanWithMap(userMap, new UserDTO(), false);
+   4. 判断用户是否存在
+   5. 不存在，拦截
+   6. 存在，保存用户信息到ThreadLocal中
+   7. 刷新token有效期
+      stringRedisTemplate.expire("login:user:" + token, 30, TimeUnit.MINUTES)
+* redis 缓存
+** 删除缓存还是更新缓存
+- 更新缓存：每次更新数据库都更新缓存，无效写操作较多
+- 删除缓存：更新数据库时让缓存失效，查询时再更新缓存
+** 缓存穿透
+客户端请求的数据在缓存中和数据库中都不存在，这样缓存永远不会生效，这些请求会到达数据库
+- 解决方案：缓存空字符串
+  - 缺点：额外的内存消耗，可能造成短期的不一致
+** 缓坡雪崩
+同一时段大量的缓存key同时失效或者Redis服务宕机，导致大量请求到达数据库，带来巨大压力
+- 解决方案：给不同的key的TTL添加随机值
+** 缓存击穿
+高并发访问并且缓存业务较复杂的key突然失效了，无数的请求给数据库带来巨大的冲击
+*** 解决方案：互斥锁
+查询缓存未命中，获取互斥锁成功的才可以查询数据库重建缓存数据，其它线程循环查询缓存
+*** 实现
+setnx lock 1：用来设置锁，只有key不存在才往里面写，返回的结果才为真
+del lock：释放锁
+*** 解决方案：逻辑过期
+维护一个时间字段，当查询缓存，发现逻辑时间过期，获取互斥锁成功的才能开启新线程查询数据库重建缓存数据，返回过期数据，其它线程也返回过期数据

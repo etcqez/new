@@ -1,0 +1,76 @@
+* lines.skip(n: 1).limit(maxSize: 5).map(line -> line.split(",")).collect(groupBy(array -> array[1], counting()));
+这样把整个时间作为了key，会按照秒来分组
+* TreeMap::new
+让groupingBy分的组有序
+* e -> Map.entry(e.getKey(), e.getValue.entrySet().stream().max(Map.Entry.comparingByValue()
+1. e -> Map.entry将e转为map
+2. e.getValue.entrySet().stream().max(Map.Entry.comparingByValue()
+   将e的值转为流并根据值求最大值
+* 三种map的区别
+1. 流.map(Function)
+   将流的每个元素转换成另一种元素
+2. Collectors.toMap(Function, Function)
+   将流的每个元素转换成一个map的键和值
+3. groupingBy(,mapping(Function, 收集器))
+   用在分组中，转换每个分组中的值，并放入同一个收集器
+* 收集器
+1. Collectors.
+2. toList(), toSet(), joining(), joining(",")
+3. toMap(Function, Function)
+   键，值
+4. groupingBy(Function, 收集器)
+   按照Function的返回值分组，把key相同的元素加到收集器中
+   #+begin_src java
+     // Map
+     // 3: new ArrayList(["令狐冲", "风清扬"])
+     // 名字长度：名字集合
+     Map<Integer, List<String>> result = stream.collect(Collectors.groupingBy(x -> x.length(), Collectors.toList()));
+   #+end_src
+   1. maping(转换成什么，放入的收集器)
+      将转换的东西放入收集器，如将User转成age放入list
+      #+begin_src java
+	// Hero(name:"令狐冲", strength:90)
+	// 名字长度：名字集合:武力值集合
+	Map<Integer, List<Integer>> result = stream.collect(Collectors.groupingBy(h -> h.length(), mapping(h -> h.strength(), toList())));
+      #+end_src
+* 统计分析
+** 统计订单
+- 每月销售量
+    #+begin_src java
+      // event_time,order_id,product_id,category_id,    category_code,brand,price,user_id, age, sex, local
+      // 0,2020-04-24 11:50:39 UTC,2294359932054536986,1515966223509089906,2.2681054266481713e+18 electronics.tablet, samsung. 162.01,1.5159156254419
+      Stream<String> lines = Files.lines(Path.of("./data.txt")).twr
+      Map<YearMonth, Long> collect = lines.skip(n: 1).limit(maxSize: 5).map(line -> line.split(",")).collect(groupingBy(array -> YearMonth.from(formatter.parse(array[1])), TreeMap::new, counting()));
+   #+end_src
+  - 销量最高
+    #+begin_src java
+      Option<Map.Entry<YearMonth, Long>> max = collect.entrySet().stream().max(Comparator.comparingLong(e -> e.getValue()));
+      max.get().sout
+    #+end_src
+- 统计销售量最高的商品
+  #+begin_src java
+    .map.collect.entrySet.stream.max(Map.Entry.comparingByValue()).ifPresent(System.out::println);
+  #+end_src
+- 下单最多的前十名用户
+  1. 每个用户的下单数
+  2. 对值进行降序排序
+   #+begin_src java
+     .collect(groupBy(array -> array[USER_ID], counting())).entrySet().stream().sorted(Map.Entry.<String, Long>comparingByValue().reversed()).limit(10).forEach(System.out::println);
+   #+end_src
+- 每个地区下单最多的用户
+  1. 每个地区每个用户的下单数
+  2. 每个地区用户的最大下单数
+     #+begin_src java
+       /*
+         上海
+         1  5
+         2  7
+       ,*/
+       .collect(groupingBy(array -> array[USER_REGION], groupingBy(array -> array[USER_ID], counting())));
+       collect.entrySet().stream().map(e -> Map.entry(e.getKey(), e.getValue.entrySet().stream().max(Map.Entry.comparingByValue())))
+      #+end_src
+  - 每个地区下单最多的前3个用户
+    #+begin_src java
+      collect.entrySet().stream().map(e -> Map.entry(e.getKey(), e.getValue.entrySet().stream().sorted(Map.Entry.comparingByValue().reversed())))
+    #+end_src
+    
