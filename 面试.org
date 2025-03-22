@@ -85,3 +85,63 @@ b+树的中间节点只存储主键，还有页号，不存储完整的记录，
 非主键字段必须相互独立
 ** 巴斯范式
 主键中的某个属性被候选键中的某个属性所决定了
+* 事务
+** 事务的ACID特性
+1. 原子性(atomicity)
+2. 一致性(consistency)
+   从一个合法性状态变换到另外一个合法的状态，满足预定的约束的状态就叫做合法的状态
+3. 隔离性(isolation)
+   并发执行的事务不会被其它事务干扰
+4. 持久性(durability)
+   一旦事务被提交，它对数据库中数据的改变就是永久性的
+** 事务的结束状态
+提交的状态(COMMIT)、中止的状态(ROLLBACK)
+- 保存点(savepoint)
+  - SAVEPOINT 保存点名称
+  - ROLLBACK TO SAVEPOINT
+  - RELEASE SAVEPOINT 保存点名称
+** 数据的并发问题与4种隔离级别
+** 数据的并发问题
+- 脏读与脏写
+  读取或写入了其它张线程未提交的数据，其它线程可能会回滚掉读取或写入的数据
+- 不可重复读
+  当字段更新后， =当前事务= 读取到和之前不同的数据
+- 幻读
+  当插入新行后， =当前事务= 读取到和之前更多的数据
+** sql中的4种隔离级别
+- READ UNCOMMITED
+- READ COMMITED
+- REPEATABLE READ
+- SERIALIZABLE
+  解决幻读
+* mysql事务日志
+1. redo日志
+   每次事务提交时，将更改写入文件
+   - redo日志的刷盘策略与过程剖析
+     由mysql参数innodb_flush_log_at_trx_commit决定，默认为1，刷盘先刷入重做日志缓存(redo log buffer) -> 文件系统缓存(page cache) -> 物理磁盘
+     - 0: 不进行刷盘，只刷入重做日志缓存，innodb存储引擎有一个后台线程，每隔1秒，就会把redo log buffer中的内容写到文件系统缓存(page cache)，然后调用刷盘操作
+     - 1：默认，实时刷盘
+     - 2: 马上更新到文件系统缓存，由后台线程决定刷盘时间，mysql服务器挂了不受影响
+     - 总结：共有3种情况，默认为1，实时刷盘，0和1分别只刷入重做日志缓存和文件系统缓存，而刷入文件系统缓存的不受mysql是否还存活的影响。接着由后台线程接管
+2. undo日志
+   更新之前记录到undo log当中
+* 锁
+有两种类型
+1. 共享锁(Shared Lock) 读锁(S)
+2. 排他锁(Exclusive Lock) 写锁(X)
+** S、X锁
+- select * from account for update;
+- select * from account lock in share mode;
+- 最后 + nowait/skip locked
+  不会再等待，nowait有锁直接报错，skip locked有锁就查询没有锁定的数据
+** 表锁
+- show open tables;
+  查看锁
+- lock tables mylock read;
+  S锁
+- unlock tables;
+- lock tables mylock write;
+  X锁
+- 意向锁
+  允许行级锁与表级锁共存
+  如果我们给某一行数据别上了排它锁，数据库会自动给更大一级空间，比如数据页或数据表别上意向锁，告诉其他人这个数据页或数据表已经有人上过排它锁了
