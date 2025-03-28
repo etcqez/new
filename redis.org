@@ -1,4 +1,5 @@
 * 短信登录(session)
+
 1. 发送手机验证码
    1. 校验手机号
    2. 如果不符合，返回错误信息
@@ -76,3 +77,11 @@ setnx lock 1：用来设置锁，只有key不存在才往里面写，返回的�
 del lock：释放锁
 *** 解决方案：逻辑过期
 维护一个时间字段，当查询缓存，发现逻辑时间过期，获取互斥锁成功的才能开启新线程查询数据库重建缓存数据，返回过期数据，其它线程也返回过期数据
+* 全局唯一ID
+- 符号位: 1bit，永远为0
+- 时间戳: 31bit，以秒为单位，可以使用63年
+  long timestamp = 现在与2020年之间的秒数
+- 序列号: 32bit，秒内的计数器，支持每秒产生2^32个不同的ID
+  long count = stringRedisTemplate.opsForValue().increment("icr" + keyPrefix(业务名) + date);
+- 拼接数字
+  timestamp << 32 | count:

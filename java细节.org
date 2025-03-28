@@ -1,0 +1,40 @@
+* 开发细节
+- 一个源文件最多只能有一个public类，其它类的个数不限
+- 只要有一个类，编译过后对应生成一个.class文件
+- 如果源文件包含一个public类，则文件名必须按该类名命名
+- 一个源文件最多只能有一个public类，其它类的个数不限，也可以可以将main方法写在非public类中，然后指定运行非public类，这样入口方法就是非public的main方法
+  - 运行非public类的main方法
+    java Dog
+* 自动转换细节
+- byte类型不能保存int的变量值
+  int a = 1; byte b = a;会报错
+- char类型可以保存int的常量值，但不能保存int的变量值
+* String和基本类型转换
+** NumberFormatException
+String str = "hello"; int n1 = Integer.parseInt(str);
+parseFlaat, parseLong, parseByte, parseBoolean("true"), parseShort
+#+begin_src java
+  int n1 = 100;
+  String s1 = n1 + "";
+  int num1 = Integer.parseInt(s1);
+  Double.parseDouble(s1);
+#+end_src
+* 赋值运算符细节
+- 复合赋值运算符会进行类型转换
+  byte b = 2; b += 1;等价b = (byte)(b + 1);
+* 多分支练习
+#+begin_src java
+  boolean b = true;
+  if(b == false) {
+      sout("a");
+  }else if(b){
+      sout("b"); //输出
+  }else if(!b){
+      sout("b");
+  }else{
+      sout("d");
+  }
+#+end_src
+* switch细节
+- case子句中的值必须是常量，而不能是变量
+- break语句用来在执行完一个case分支后使程序跳出switch语句块，如果没有写break，程序会顺序执行到switch结尾，除非遇到break
