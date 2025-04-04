@@ -38,3 +38,27 @@ parseFlaat, parseLong, parseByte, parseBoolean("true"), parseShort
 * switch细节
 - case子句中的值必须是常量，而不能是变量
 - break语句用来在执行完一个case分支后使程序跳出switch语句块，如果没有写break，程序会顺序执行到switch结尾，除非遇到break
+* 练习
+- 打印空心金字塔
+  1. 在输出*之前，输出空格
+     空格数 = 总层数 - 当前层
+  2. 控制打印每层的*数
+  3. 只有在当前行的第一个位置是*，最后一个位置也是*
+  4. 当i=5，最后一层全部输出*号
+  #+begin_src java
+    for(int i = 1; i <= 5; i++){
+        // 1
+        for(int k = 1; k <= 5 -i; k++){
+    	sout(" ");
+        }
+        // 2
+        for(int j = 1; k <= 2*i-1; j++){
+    	// 3
+    	if(j == i || j == 2*i-1 || i == 5){
+    	    sout("*");
+    	}else{
+    	    sout(" ");
+    	}
+        }
+    }
+  #+end_src
