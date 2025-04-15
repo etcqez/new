@@ -209,5 +209,60 @@
 窥探, 究明, 追究
 屁理屈 herikutsu
 屁理屈, 狡辩
-
+折りたたみ oritatami
+折叠, 折叠式的
+人力 jinriki
+人力
+おまけ omake
+附赠品, 赠品, 额外赠品
+ピクルス pikurusu Pickles
+泡菜, 腌菜, 腌制蔬菜
+探っ saguru
+探索, 探
+がらみ garami
+纠葛, 牵连, 纷争
+はかどる hakadoru
+进展, 顺利, 进步
+追え ou
+追, 跟随, 跟着我
+手がかり tegakari
+线索, 提示, 暗示
+仮に karini
+假设, 暂且, 如果
+募る tsunoru
+募集, 招, 征集
+合間 aima
+间隔时间, 间隔, 介于两者之间
+見せ場 miseba
+看点, 亮点, 精彩场面
+撤収 tesshuu
+撤退, 撤离, 退出
+絡ま karamu
+纠缠, 缠绕, 纠结
+有り余っ ariamaru
+有余, 多余, 剩余
+すっきり sukkiri
+爽快, 清爽, 整齐
+気晴らし kibarashi
+分心, 消遣, 娱乐
+パンケーキ pankeeki
+煎饼, 薄煎饼, 烙饼
+打ち合わせ uchiawase
+会议, 打算/商量/协商
+損ね sokoneru
+破坏, 损失, 损伤
+駆け出し kakedashi
+初出茅庐, 新手, 初学者
+画伯 gahaku
+画家, 绘画家, 画伯
+裁か sabaku
+裁判, 判定, 裁定
+まとめ matomeru
+总结, 整理, 放在一起
+アンチテーゼ anchiteeze Antithesis
+对立面, 反面, 对立
+かいくぐっ kaikuguru
+躲闪, 绕行, 长相
+学べる manaberu
+可以学, 能学习, 可学习
 

@@ -1,3 +1,33 @@
+* 错题
+1. 试写出以下代码的执行结果
+   #+begin_src java
+public class Car {
+    double price=10;
+    static String color="white";
+
+    public Car() {
+    }
+
+    public Car(double price) {
+        this.price = price;
+    }
+
+    @Override
+    public String toString() {
+        return price + " " + color;
+    }
+
+    public static void main(String[] args) {
+        Car car = new Car();
+        Car car1 = new Car(100);
+        System.out.println(car);
+        System.out.println(car1);
+    }
+}
+   #+end_src
+9.0 red
+100.0 red
+
 * 开发细节
 - 一个源文件最多只能有一个public类，其它类的个数不限
 - 只要有一个类，编译过后对应生成一个.class文件
@@ -38,7 +68,9 @@ parseFlaat, parseLong, parseByte, parseBoolean("true"), parseShort
 * switch细节
 - case子句中的值必须是常量，而不能是变量
 - break语句用来在执行完一个case分支后使程序跳出switch语句块，如果没有写break，程序会顺序执行到switch结尾，除非遇到break
-* 练习
+- switch(表达式)中表达式的返回值必须是：
+  byte, short, int, char, =enum=, String
+* 循环练习
 - 打印空心金字塔
   1. 在输出*之前，输出空格
      空格数 = 总层数 - 当前层
@@ -62,3 +94,323 @@ parseFlaat, parseLong, parseByte, parseBoolean("true"), parseShort
         }
     }
   #+end_src
+* 可变参数细节
+1. 可变参数的实参可以为数组
+2. 一个形参列表中只能出一个可变参数
+* 构造器使用细节
+1. 构造器没有返回值
+2. 构造器是完成对象的初始化，并不是创建对象
+* 访问修饰符细节
+public protected 无 private
+同类 同包 子类 不同包
+* 继承使用细节
+1. 子类继承了所有的属性和方法，但是私有属性和方法不能在子类直接访问，要通过父类提供公共的方法去访问
+2. 子类必须调用父类的构造器，完成父类的初始化
+3. 当创建子类对象时，不管使用子类的哪个构造器，默认情况下总会去调用父类的无参构造器，如果父类没有提供无参构造器，则必须在子类的构造器用super去指定使用父类的哪个构造器完成对父类的初始化工作，否则，编译不会通过
+4. 如果希望指定去调用父类的某个构造器，则显式的调用一下：super(参数列表)
+5. super在使用时，必须放在构造器第一行(super只能在构造器中仅代表和)
+6. super()和this()都只能放在构造器第一行，因此这两个方法不能共存在一个构造器
+7. 父类构造器的调用不限于直接父类，将一直往上追溯直到Object类
+* 方法重写细节
+1. 子类的方法的参数，方法名称要和父类方法的参数方法名称完全一样
+2. 子类方法的返回类型和父类方法返回类型一样，或者是父类返回类型的子类
+3. 子类方法不能缩小父类方法的访问权限
+* 属性没有重写之说！属性的值看编译类型
+* ==运算符和equals
+如果判断基本类型，判断的是值是否相等
+如果判断引用类型，判断的是地址是否相等
+** equals
+是Object类中的方法
+默认就是==判断的是地址是否相等，子类中往往重写该方法，用于判断内容是否相等
+* Object
+- toString
+  默认返回：全类名+@+哈希值的十六进制
+  当直接输出一个对象时，toString方法会被默认的调用
+- finalize
+  当对象补回收时，系统自动调用该对象的finalize方法
+* 代码块使用细节
+- 静态代码块
+  类加载时执行，只会执行一次
+  - 类什么时候加载
+    1. 创建对象实例时
+    2. 创建子类对象时，父类也会被加载
+    3. 使用类的静态成员时
+- 普通代码块
+  每创建一个对象，就执行
+  普通代码代是构造器的补充
+- 创建一个对象时，在一个类调用顺序是
+  1. 调用静态代码块和静态属性初始化
+  2. 调用普通代码块和普通属性初始化
+  3. 调用构造方法
+- 创建一个子类对象时(继承关系)，他们的静态代码块，静态属性初始化，普通代码块，普通属性初始化，构造方法的调用顺序如下：
+  1. 父类的静态代码块和静态属性
+  2. 子类的静态代码块和静态属性
+  3. 父类的普通代码块和普通属性初始化
+  4. 父类的构造方法
+  5. 子类的普通代码块和普通属性初始化
+  6. 子类的构造方法
+* 静态属性初始化和静态代码块只会执行一次
+* 设计模式
+** 单例设计模式
+- 饿汉式
+  1. 构造器私有化
+     防止直接new
+  2. 类的内部new一个私有静态对象保存在变量当中
+     保证对象只会创建一次
+  3. 向外暴露一个静态的公共方法
+     创建对象
+- 懒汉式
+  将new对象的代码移到公共方法当中，当对象为空时创建
+- 饿汉式在类加载时就创建，可能存在资源浪费问题
+- 懒汉式有线程安全问题
+抽象类中的方法调用了类中的抽象方法
+1. 抽象类中包含一个抽象方法，和一个完整的方法，方法中调用了抽象方法
+2. 子类继承了抽象类并实现了抽象方法
+3. 创建子类对象，调用父类中的方法
+4. 因为多态，当调用父类中的抽象方法时会自动调用子类的方法
+* final使用细节
+final可以修饰局部变量，可以用在形参上
+1. final类不能被继承
+2. final方法不能被重写
+3. 如果一个类已经是final类了，就没有必要再将方法修饰成final方法
+4. final和static往往搭配使用，效率更高，不会导致类加载
+* 抽象类细节
+1. 抽象类不能被实例化
+2. 抽象类不一定要包含abstract方法
+3. 一旦类包含了abstract方法，则这个类必须声明为abstract
+4. 抽象类可以有任意成员【抽象类还是类】，比如：非抽象方法、构造器、静态属性等等
+5. 如果一个类继承了抽象类，则它必须实现抽象类的所有方法，除非它自己也声明abstract类
+6. 抽象方法不能使用private, final和static来修饰，因为这些关键字都是和重写相违背的
+** 模板设计模式-抽象类最佳实践
+* 接口使用细节
+1. 接口不能被实例化
+2. 接口上所有的方法是public方法，接口中抽象方法，可以不用abstract修饰
+3. 一个普通类实现接口，就必须将该接口的所有方法都实现
+4. 抽象类实现接口，可以不用实现接口的方法
+5. 一个类同时可以实现多个接口
+6. 接口中的属性只能是final的，而且是public static final
+7. 接口中属性的访问形式：接口名.属性名
+8. 接口不能继承其它的类，但是可以继承多个别的接口
+9. 接口的修饰符只能是public和默认，这点和类的修饰符是一样的
+* 接口VS继承
+1. 当子类继承了父类，就自动的拥有了父类的功能
+2. 如果子类需要扩展功能，可以通过实现接口的方式扩展
+3. 可以理解实现接口是对java单继承机制的一种补充
+* 类的五大成员
+属性、方法、构造器、代码块、内部类
+* 内部类
+** 局部内部类
+局部内部类是定义在外部类的局部位置的，比如方法中，并且有类名
+** 内部类共同细节(局部内部类和匿名内部类)
+1. 可以直接访问外部类的所有成员，包含私有的
+2. 不能添加访问修饰符，因为它的地位就是一个局部变量。局部变量是不能使用修饰符的。但是可以使用final修饰，因为局部变量也可以使用final
+3. 作用域：仅仅在定义它的方法或代码块中
+4. 如果外部类和局部内部类成员重名时，默认遵循就近原则，如果想访问外部类的成员，使用 =外部类名.this.成员= 去访问
+** 匿名内部类
+既创建了类，同时也创建了类的对象
+*** 创建匿名内部类
+1. 接口 对象名 = new 接口(){}
+   这样创建的是实现了接口的类的对象
+2. 类 对象名 = new 类(){}
+   这样创建的是继承了类的对象
+** 成员内部类
+成员内部类定义在外部类的成员位置，并且没有static修饰
+1. 可以直接访问外部类的所有成员，包含私有的
+2. 可以添加任意访问修饰符(public, protected, 默认, private)，因为它的地位就是一个成员
+3. 作用域：整个类体，在外部类中的方法中创建成员内部类对象，再调用方法
+4. 外部类可以访问成员内部类私有属性
+*** 外部其它类，使用成员内部类的二种方式
+1. 外部类.内部类 对象名 = 外部类对象.new 内部类();
+2. 在外部类中，编写一个方法，可以返回内部类对象
+** 静态内部类
+静态内部类定义在外部类的成员位置，并且有static修饰
+1. 可以直接访问外部类的所有成员，包含私有的， =但不能直接访问非静态成员=
+*** 外部其它类访问静态内部类
+1. 外部类.内部类 对象名 = new 外部类.内部类();
+2. 在外部类中，编写一个方法，可以返回内部类对象
+** 小结
+1. 局部内部类、匿名内部类 放在方法或者代码块中，本质是局部变量
+2. 成员内部类、静态内部类 放在外部类成员位置，本质是一个成员
+* 枚举类
+把具体对象一个一个例举出来的类
+** 枚举的二种实现方式
+1. 自定义类实现枚举
+   1. 将构造器私有化，目的防止直接new
+   2. 去掉setXxx方法，防止属性被修改
+      private String name;
+      private String desc;
+   3. 在内部创建对象
+      public static final Season SPRING = new Season("春天", "温暖");
+   4. 对枚举对象名通常使用全部大写，常量的命名规范
+2. 使用enum关键字实现枚举
+   1. 使用关键字emum替代class
+   2. public static final Season SPRING = new Season("春天", "温暖");直接使用
+      SPRING("春天", "温暖"); 解读 常量名(实参列表)
+   3. 如果有多个常量（对象），使用，号间隔即可
+   4. 如果如果enum 来实现枚举，要求将定义常量对象，写在前面
+      SPRING("春天", "温暖"), WINTER("冬天", "寒冷"), AUTUMU("秋天", "凉爽"), SUMMER("夏天", "炎热");
+** enum关键字实现枚举注意事项
+1. 当我们使用enum关键字开发一个枚举类时，默认会继承Enum类，而且是一个final类
+2. 传统的public static final Season2 SPRING =new SEASON2("春天", "温暖"); 简化成 SPRING("春天", "温暖");
+3. 如果使用无参构造器 创建对象，则实参列表和小括号都可以省略
+4. 当有多个枚举对象时，使用，间隔，最后有一个分号结尾
+5. 枚举对象必须放在枚举的行首
+** 练习
+1. 下面代码是否正确，并说明表示的含义
+   #+begin_src java
+     enum Gender{
+         BOY, GIRL; //这里其实就是调用Gender类的无参构造器
+     }
+   #+end_src
+2. 下面代码输出什么
+   #+begin_src java
+     enum Gender2{
+         BOY, GIRL;
+     }
+     Gender2 boy = Gender2.BOY; //OK 将枚举对象（常量对象）赋值给boy boy2
+     Gender2 boy2 = Gender2.BOY; //OK
+     System.out.println(boy);//输出 BOY 本质就是调用父类的toString() return name
+     System.out.println(boy2 == boy);//True 因为是静态的只会执行一次
+   #+end_src
+** Enum成员方法
+- toString()
+  Enum类已经重写过了，返回的是当前对象名，子类可以重写该方法，用于返回对象的属性信息
+- name()
+  输出枚举对象的名字
+- ordinal()
+  输出的是该枚举对象的编号，从0开始
+- value()
+  从反编译可以看到value()，返回枚举对象的数组，含有定义的所有枚举对象
+- valueOf()
+  将字符串转换成枚举对象，要求字符串必须为已有的常量名，否则报异常
+- compateTo()
+  比较两个枚举常量，比较的就是编号
+** Enum练习
+1. 声明Week枚举类，其中包含星期一至星期日的定义;MONDAY..SUNDAY;
+2. 使用values返回所有的枚举数组，并遍历，输出星期一至星期日
+#+begin_src java
+public class Exercise {
+    public static void main(String[] args) {
+        Week[] values = Week.values();
+        for (Week value : values) {
+            System.out.println(value);
+        }
+    }
+}
+enum Week{
+    MONDAY("星期一"),
+    TUESDAY("星期二"),
+    WEDNESDAY("星期三"),
+    THURSDAY("星期四"),
+    FRIDAY("星期五"),
+    SATURDAY("星期六"),
+    SUNDAY("星期日");
+    private String name;
+
+    @Override
+    public String toString() {
+        return name;
+    }
+
+    private Week(String name) {
+        this.name = name;
+    }
+}
+#+end_src
+** Enum使用细节
+1. 使用enum关键字后，就不能再继承其它类了，因为enum会隐式继承Enum，而Java是单继承机制
+2. 枚举类和普通类一样，可以实现接口
+** 四种元注解
+1. Retention
+   指定注解的作用范围
+   包含一个RetentionPolicy类型的成员变量，使用 @Rentention时必须为该value成员变量指定值
+   1. SOURCE
+      编译时有效
+      编译器使用后，直接丢弃这种策略的注释
+   2. CLASS
+      编译器将把注释记录在class文件中，当运行Java程序时，JVM不会保留注解，这是默认值
+   3. RUNTIME
+      编译器将把注释记录在class文件中，当运行Java程序时，JVM会保留注解，程序可以通过反射获取该注解
+2. Target
+   指定注解可以在哪些地方使用
+3. Documented
+   指定注解是否会在javadoc体现
+4. Inherited
+   子类会继承父类注解
+   被它修饰的Annotation将具有继承性，如果某个类使用了被 @Inherited 修饰的Annotation，则子类将自动具有该注解
+* throw异常
+** 异常体系图
+*** Serialzable
+**** Throwable
+***** Error
+****** StackOverFlowErrow
+****** OutOfMemoryError
+***** Exception
+****** FileNotFoundException
+****** RuntimeException
+******* NullPointerException
+******* ArithmeticException
+******* ArrayIndexOutOfBoundsException
+******* ClassCastException
+******* NumberFormatException
+*** 异常体系图小结
+1. 异常分为两大类，运行时异常和编译时异常
+2. 编译时异常，是编译器要求必须处置的异常
+3. 运行时异常，编译器不要求强制处置。一般是指编程时的逻辑错误，是程序员应该避免其出现的异常。java.lang.RuntimeException类及它的子类都是运行时异常
+** 五大运行时异常
+- NullPointerException
+- ArithmeticException
+- ArrayIndexOutOfBoundsException
+- ClassCastException
+- NumberFormatException
+** 常见的编译异常
+- SQLException
+- IOException
+- FileNotFoundException
+- EOFException
+- ClassNotFoundException
+- IllegalArguementException
+** tryCatch练习
+#+begin_src java
+  catch{
+      return ++i;//只执行++i
+  }finally{
+      return ++i;;//执行
+  }
+#+end_src
+#+begin_src java
+  catch{
+      return ++i;//执行++i后，赋值给temp，返回temp
+  }finally{
+      ++i;;//执行
+      sout("i="+i)//执行
+  }
+#+end_src
+- 小结
+  1. 不管是否发生异常，finally里面的代码总是执行
+  2. 如果return语句在catch，会将return值保存起来，再执行finally语句
+| 表头1 | 表头2 | 表头3 |
+|-------+-------+-------|
+| 内容1 | 内容2 | 内容3 |
+| 内容4 | 内容5 | 内容6 |** throws使用细节
+1. 对于编译异常，程序中必须处理，可以throws
+2. 对于运行时异常，程序中如果没有处理，默认就是throws的方式处理
+3. 子类抛出的异常必须是父类抛出的异常的子类
+** 自定义异常类
+- 要求年龄在18 - 120 之间，否则招聘一个自定义异常
+#+begin_src java
+  class AgeExeception extends RuntimeException{
+      public AgeExeception(String message){
+  	super(message)
+      }
+  }
+  if(!(age >= 18 && age <= 120)){
+      throw new AgeExeception("年龄需要在18-120之间");
+  }
+#+end_src
+1. 一般情况下，我们自定义异常类是继承 RuntimeException
+2. 即把自定义异常做成运行时异常，好处是，我们可以使用默认的处理机制
+** throw和throws的区别
+|        | 意义                     | 位置       | 后面跟的东西 |
+| throws | 异常处理的一种方式       | 方法声明处 | 异常类型     |
+| throws | 手动生成异常对象的关键字 | 方法体中   | 异常对象     |

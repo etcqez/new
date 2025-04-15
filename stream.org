@@ -177,3 +177,6 @@ printf %n表示换行
     }
     Map<String, Long> map = f0.get();
   #+end_src
+* lambda原理
+1. 在编译时，会在当前类中声明一个私有的静态方法
+   类.class.getDeclareMethods()
