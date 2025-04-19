@@ -393,7 +393,8 @@ enum Week{
 |-------+-------+-------|
 | 内容1 | 内容2 | 内容3 |
 | 内容4 | 内容5 | 内容6 |** throws使用细节
-1. 对于编译异常，程序中必须处理，可以throws
+1. 对于编
+   译异常，程序中必须处理，可以throws
 2. 对于运行时异常，程序中如果没有处理，默认就是throws的方式处理
 3. 子类抛出的异常必须是父类抛出的异常的子类
 ** 自定义异常类
@@ -414,3 +415,156 @@ enum Week{
 |        | 意义                     | 位置       | 后面跟的东西 |
 | throws | 异常处理的一种方式       | 方法声明处 | 异常类型     |
 | throws | 手动生成异常对象的关键字 | 方法体中   | 异常对象     |
+* 包装类
+** Interge创建机制
+- valueOf源码
+  #+begin_src java
+    if (-128<=i<=127){
+        return IntegerCache.cache[];//是一个有256个数组
+    }
+  #+end_src
+  - 看看下面代码，输出什么结果？
+    #+begin_src java
+      Integer i = new Integer(1);
+      Integer j = new Integer(1);
+      sout(i==j);//False
+      Integer i = 1;
+      Integer j = 1;
+      sout(i==j);//True -128<=i<=127 直接返回
+    #+end_src
+*** Integer面试题
+#+begin_src java
+  Integer i = new Integer(1);
+  Integer j = new Integer(1);
+  sout(i==j);//False
+  Integer i = 1;
+  Integer j = 1;
+  sout(i==j);//True -128<=i<=127 直接返回
+
+  Integer i=127;
+  int j=127;
+  sout(i==j);//只要有基本数据类型，判断的是值是否相等
+  Integer i=128;
+  int j=128;
+  sout(i==j);//只要有基本数据类型，判断的是值是否相等
+#+end_src
+*** Intege双等号总结
+1. Integer和基本数据类型比较，判断的是值是否相等
+2. 如果都是new出来的，一定不是同一对象
+3. 如果是都是Integer类型且不是new出来的，如果在-128 ~ 127 之间是同一对象
+** String结构剖析
+1. String 是final类，不能被其他的类继承
+2. String 有属性 private final char value[]; 用于存放字符串内容
+3. value是一个final类型，不可以修改，即value不能指向新的地址，但是单个字符内容是可以变化的
+*** String创建剖析
+- 创建String对象的两种方式
+  1. 直接赋值String s = "";
+     先从常量池查看是否有“”的数据空间，如果有，直接指向；如果没有则重新创建，然后指向。s最终指向的是常量池的空间地址
+  2. 调用构造方法 String s = new String("");
+     先在堆中创建空间，里面维护了value属性，指向常量池的“”空间。如果常量池没有“”，重新创建，如果有，直接通过value指向。最终指向的是堆中的空间地址
+*** 测试题
+1. 
+  #+begin_src java
+    String a = "abc";
+    String b = "abc";
+    sout(a.equals(b)); //T 判断字符串内容
+    sout(a==b); //T
+  #+end_src
+2. 
+  #+begin_src java
+    String a = "abc";
+    String b = new String("abc");
+    sout(a.equals(b)); //T 判断字符串内容
+    sout(a==b); //F
+    sout(a==b.intern()); //T 返回的是常量池的地址
+    sout(b==b.intern()); //F
+  #+end_src
+3. 创建了几个对象
+   #+begin_src java
+     String a = "hello" + "abc";
+   #+end_src
+   =只会创建一个对象，因为编译器会做优化=
+4. 
+   #+begin_src java
+     String a = "hello";
+     String b = "abc";
+     String c=a+b; //创建了几个对象
+   #+end_src
+   分析：
+   1. 先创建一个StringBuilder sb = StringBuilder();
+   2. 执行 sb.append("hello");
+   3. sb.append("abc");
+   4. String s = sb.toString()
+      new String()
+   5. 最后其实是 c 指向堆中的对象(String) value[] 指向 池中 "helloabc"
+5. 小结：常量相加，看的是池，变量相加，是在堆中
+*** intern()
+当调用这个方法时，如果池已经包含一个等于此String对象的字符串（用equal()方法确定），则返回池中的字符串。否则，将此String对象添加到池中，并返回此String对象的引用
+也就是这个方法最终返回的是常量池的地址
+*** String c=a+b; //创建了几个对象
+** StringBuffer结构剖析
+1. StringBuffer 的直接父类是AbstractStringBuilder
+2. 实现了Serilizable
+3. 在父类中 AbstractStringBuilder 中有属性 char[] value，不是final
+4. 因为不再是 final类型，字符串内容不再存放在常量池，而是在堆中
+5. StringBuffer是一个final类
+*** String VS StringBuffer
+1. String保存的是字符串常量，里面的值不能更改，每次String类的更新实际上就是更改地址，效率较低
+2. StringBuffer保存的是字符串变量，里面的值可以更改，每次更新更新实际上可以更新内容，不用每次更新地址，效率较高
+*** String和StringBuffer相互转换
+#+begin_src java
+    // String—-> StringBuffer String s = "hello";
+    //方式1：
+    StringBuffer b1 = new StringBuffer(s);
+    //方式2：
+    StringBuffer b2 = new StringBuffer();
+    b2.append (s);
+
+    // StringBuffer—>String
+    //方式1：
+    String s2 = b1.toString; //b1 [StringBuffer]
+    // 万式2：
+    String s3 = new String (b1);
+#+end_src
+*** 练习
+#+begin_src java
+  String str = null;
+  StringBuffer sb = new StringBuffer();
+  sb.append(str); //底层调用的是AbstractStringBuilder的appendNull，添加了字符串null
+  sout(sb.length()); //4
+
+  sout(sb); //null
+  //下面的构造器，会抛出NullPointerException
+  StringBuffer sb1 = new StringBuffer(str);
+  sout(sb1);
+#+end_src
+*** 和append()向StringBuffer添加null，底层调用的是AbstractStringBuilder的appendNull，添加了字符串null
+而构造器会抛出空指针
+*** StringBuild和StringBuffer的特性基本相同，线程不安全
+*** String三者的对比
+- String 不可变字符序列，效率低，但是复用率高
+- StringBuffer和StringBuilder 都是可变字符序列，效率高，前者线程安全，后者线程不安全
+* Arrays类
+- sort(arr, new Comparator(){})
+- binarySearch(arr, 3)
+  在arr中查找元素3的下标
+- copyOf(arr, arr.length)
+  生成一个新数组，从arr拷贝arr.length个元素
+- fill(num,99);
+  将99填充num数组的每个元素
+- equals(arr,arr2);
+  比较两个数组元素内容是否完全一致
+- asList(1,2,3); 返回值的编译类型是List(接口)，它的运行类型是Arrays$ArrayList(内部类)
+  将一组值，转换成list
+* System类
+- arraycopy(源数组，索引，目标数组，索引，个数)
+- currentTimeMillens()
+  返回当前时间距离1970-01-01的毫秒数
+* BigInteger和BigDecial类
+- new BigInteger(数字字符串)
+  数很大
+- new BigDecial(数字字符串)
+  精度很高
+- 对象.add(相应对象)
+* 日期类
+* 第一代日期类
