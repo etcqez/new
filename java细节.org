@@ -567,4 +567,28 @@ enum Week{
   精度很高
 - 对象.add(相应对象)
 * 日期类
-* 第一代日期类
+** 第一代日期类
+1. new Date()
+   可选参数：毫秒数
+2. SimpleDateFormat sdf = new SimpleDateFormat("yyyy年MMdd日 hh:mm:ss E");
+3. String format = sdf.format(d1);
+4. sdf.parse(格式化的String)
+   把一个格式化的String转成对应的Date
+** 第二代日期类
+- Calendar类是一个抽象类，并且构造器私有
+  1. Calendar c = Calendar.gettInstance();
+  2. c.get(Calendar.YEAR);
+** 第三代日期类
+- LocalDate 日期 LocalTime 时间 LocalDateTime 日期时间
+  1. LocalDateTime ldt = LocalDateTime.now()
+  2. ldt.getYear()
+- DateTimeFormatter
+  1. DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("")
+  2. dateTimeFormatter.format(ldt)
+- Instant 时间戳
+  类似于Date，提供了一系列Date类转换的方式
+  1. Instant now = Instant.now();
+  2. Date date = Date.from(now);
+  3. Instant install = date.toInstall();
+- ldt.plusDays(2)
+  对当前时间进行加2天
