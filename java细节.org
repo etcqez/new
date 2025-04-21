@@ -27,7 +27,14 @@ public class Car {
    #+end_src
 9.0 red
 100.0 red
-
+* 编程思想
+1. 在判断参数是否合法时
+   如：if((str != null)){ throw } // 如果为空则抛出异常
+   1. 写出正确的情况
+   2. 然后取反即可
+2. 如果有多个条件需要被满足，则过关斩将
+   如：分别判断用户名、密码、邮箱格式是否正确
+   if(!(userLength >= 2 && userLength <= 4)){ throw } //如果用户名不符合规则抛出异常
 * 开发细节
 - 一个源文件最多只能有一个public类，其它类的个数不限
 - 只要有一个类，编译过后对应生成一个.class文件
@@ -462,6 +469,11 @@ enum Week{
      先从常量池查看是否有“”的数据空间，如果有，直接指向；如果没有则重新创建，然后指向。s最终指向的是常量池的空间地址
   2. 调用构造方法 String s = new String("");
      先在堆中创建空间，里面维护了value属性，指向常量池的“”空间。如果常量池没有“”，重新创建，如果有，直接通过value指向。最终指向的是堆中的空间地址
+*** String.format("%s,%s .%c", 位置参数)
+字符串格式化
+- 应用
+  1. 输入形式为：Idea Vscode Pycharm, 以 Pycharm,Idea .V 的形式打印出来
+     String.format("%s,%s .%c", 位置参数)
 *** 测试题
 1. 
   #+begin_src java
@@ -592,3 +604,52 @@ enum Week{
   3. Instant install = date.toInstall();
 - ldt.plusDays(2)
   对当前时间进行加2天
+* 集合
+** 集合体系图
+*** Iterable
+**** Collection
+***** List
+****** ArrayList
+****** ArrayLinkedList
+****** Vector
+***** Set
+****** TreeSet
+****** HashSet
+*** Map
+**** HashMap
+***** LinkedHashMap
+**** Hashtable
+***** Properties
+**** TreeMap
+** Collection方法
+- andAll(Collection)
+- containsAll(Collection对象)
+- removeAll(Collection对象)
+** 迭代器遍历
+1. Collection对象.iterator()
+2. white (iterator.hasNext()) { object next = iterator.next(); }
+3. 快捷键 itit
+4. 重置迭代器Collection对象.iterator()
+** 增强for
+增强for就是简化版的iterator，本质一样。只能用于遍历集合或数组
+1. for (Object book : col) {}
+2. 快捷键 I
+** List接口方法
+元素有序，支持索引
+1. add(索引，对象)
+2. andAll(索引，集合)
+3. get(索引)
+4. remove(索引)
+5. set(索引，对象)
+   相当于替换
+6. subList(fromIndex, toIndex)
+   返回从fromIndex到toIndex位置的子集合
+*** List的三种遍历方式
+1. iterator
+2. 增强for
+3. for
+   #+begin_src java
+     for (int i = 0; i < list.size(); i++){
+         Object object = list.get(i);
+     }
+   #+end_src
