@@ -1,14 +1,15 @@
-* lines.skip(n: 1).limit(maxSize: 5).map(line -> line.split(",")).collect(groupingBy(array -> array[1], counting()));
+* 部分代码说明
+** lines.skip(n: 1).limit(maxSize: 5).map(line -> line.split(",")).collect(groupingBy(array -> array[1], counting()));
 这样把整个时间作为了key，会按照秒来分组
-* TreeMap::new
+** TreeMap::new
 让groupingBy分的组有序
-* e -> Map.entry(e.getKey(), e.getValue.entrySet().stream().max(Map.Entry.comparingByValue()))
+** e -> Map.entry(e.getKey(), e.getValue.entrySet().stream().max(Map.Entry.comparingByValue()))
 1. e -> Map.entry将e转为map
 2. e.getValue.entrySet().stream().max(Map.Entry.comparingByValue()
    将e的值转为流并根据内层map的值求最大值
-* groupingBy(array -> {String c = array[CATEGORY_CODE]; int idx = c.indexOf("."); return c.substring(0, idx); }, TreeMap::new, counting())
+** groupingBy(array -> {String c = array[CATEGORY_CODE]; int idx = c.indexOf("."); return c.substring(0, idx); }, TreeMap::new, counting())
 groupingBy的参数是一个函数，转化大类别为小类别
-* "%-12s%-15s%s%n"
+** "%-12s%-15s%s%n"
 printf %n表示换行
 * 三种map的区别
 1. 流.map(Function)
