@@ -1,4 +1,92 @@
 * 源码
+** ArrayList
+*** ArrayList扩容
+1. ArrayList中维护了一个Object类型的数组elementData
+   transient Object[] elemeentData;
+   transient 表示瞬间，表示该属性不会被序列化
+2. 当创建ArrayList对象时，如果使用的是无参构造器，则初始elementData容量为0
+   赋值给elementDate 量空数组
+   1. 第1次添加，则扩容为10
+      当elementDate为空数组，最小容量 = 最小容量(size+1) 和 DEFAULT_CAPACITY(10) 的最大值
+   2. 如果需要再次扩容，则扩容为1.5倍
+      1. if (minCapacity - elemeentData.length > 0) 则扩容
+	 =minCapacity是根据维护的变量size+1 计算的，而后者是实际容量=
+      2. newcapacity = oldCapacity + (oldCapacity >> 1);
+	 1.5倍
+      3. =如果增大1.5倍的newcapacity还是小于minCapacity=
+	 即oldCappacity为0时，增大1.5倍也是0，这时newCapacity = minCapacity(10)
+3. 如果使用的是指定大小折构造器，则初始elementData容量为指定大小，如果需要扩容，则直接扩容elementDataa为1.5倍
+** HashSet
+*** 结论
+1. HashSet 底层是HashMap
+2. 添加一个索引时，先得到hash值 会转成索引值
+3. 找到存储数据表table，看这个索引位置是否已经存放有元素
+4. 如果没有，直接加入
+5. =如果有，调用equals比较，如果相同，就放弃添加，如果不相同，则添加到最后=
+6. 在java8中，如果一条链表的元素个数到达8，并且table的大小 >= 64，就会进行树化(红黑树)
+*** HashSet扩容机制
+*** 添加第一个元素
+1. add(){ return map.put(e, PRESENT)=null };
+   1. 调用的是map中的方法
+   2. PRESENT是一个静态final，没有意义，起到占位的目的
+2. put(return putVal(hash(key)...)) 哈希值不是hashcode
+   #+begin_src java
+     int h;
+     return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
+   #+end_src
+   *代码解析*
+
+   1. *~key == null~ 为 =true=*
+
+      - 直接返回 =0= ， =h=  没有被使用，因此不会报错。
+
+   2. *~key == null~ 为 =false=*
+
+      - 执行 ~(h = key.hashCode())~，此时 =h= 被赋值为 =key.hashCode()= 。
+
+      - 然后计算 =h ^ (h >>> 16)=，此时 =h=  已经被赋值，所以可以正常使用。
+3. putVal(int hash, K key, V value, boolean, onlyIfAbseent)
+   1. Node<K,V>[] tab; Node<K,V> p; int n,i;
+      定义了辅助变量
+
+   2. if ((tab = table) == null || (n = tab.length) == 0)
+      table就是HashMap的一个数组，类型昌 Node[]
+      当table为空或长度为0
+
+   3. n = (tab = resize()).length
+
+4. resize()
+   1. int oldCap = (oldTab == null) ? 0 : oldTab.length
+      当 oldTab == null, 则 oldCap = 0
+
+   2. newCap = DEFAULT_INITIAL_CAPACITY(16)
+
+   3. newThr = (int)(DEFAULT * DEFAULT_INITIAL_CAPACITY)
+      0.75*16=12
+      临界值，虽然容量有16，但是到达临界值就开始扩容
+
+   4. Node<K,V> [] newTab = (Node<K,V>[]) new Node[newCap]
+      创建一个容量16的Node数组
+
+   5. table = newTab
+
+5. putVal(int hash, K key, V value, boolean, onlyIfAbseent)
+   1. n = (tab = resize()).length
+      16
+
+   2. if ((p = tab[i = (n - 1) & hash]) == null)
+      i是存放的索引位置，p是该位置的对象
+      - =n - 1=：因为 =n=  是 2 的幂， =n - 1= 的二进制形式是全 =1=（如 ~16 - 1 = 15~ → =1111= ）。
+      - =& hash= ：通过位与运算（ =&=）将哈希值映射到 =[0, n-1]= 范围内，等价于 =hash % n= ，但效率更高。`
+   3. 如果p为空，表示还没有存放过元素，就创建一个Node
+      1. tab[i] = newNode(hash, key, value, null);
+	 1. hash 用来比较，key的hash和下一具是否相等，如果相等，放在后面
+
+	 2. null 后结点
+
+6. add(){ return map.put(e, PRESENT)=null };
+   返回null，代表成功，返回已查询的对象，代表失败，代表添加的东西存在
+
 * 错题
 1. 试写出以下代码的执行结果
    #+begin_src java
@@ -665,12 +753,6 @@ enum Week{
 ** ArrayList
 1. 基本等同于Vector，除了ArrayList是线程不安全
 2. 多线程情况下，不建议使用ArrayList
-*** ArrayList扩容
-1. ArrayList中维护了一个Object类型的数组elementData
-   transient Object[] elemeentData;
-   transient 表示瞬间，表示该属性不会被序列化
-2. 当创建ArrayList对象时，如果使用的是无参构造器，则初始elementData容量为0，第1次添加，则扩容为10，如果需要再次扩容，则扩容为1.5倍
-3. 如果使用的是指定大小折构造器，则初始elementData容量为指定大小，如果需要扩容，则直接扩容elementDataa为1.5倍
 ** Set接口方法
 1. 无序，没有索引，不能用索引的方式来遍历
 2. 不允许重复元素，所以最多包含一个null
