@@ -86,7 +86,40 @@
 
 6. add(){ return map.put(e, PRESENT)=null };
    返回null，代表成功，返回已查询的对象，代表失败，代表添加的东西存在
-
+*** 添加重复元素
+1. Node<K,V> e; K k;
+   定义了辅助变量
+2. 
+  #+begin_src java
+    if(p.hash == hash && ((k = p.key) == key || (key != null && key.equals(k))))
+  #+end_src
+   1. p.hash == hash
+      如果当前索引位置对应的链表的第一个元素和准备添加的key的hash值一样
+   2. (k = p.key) == key
+      并且满足 准备加入的key 和 p 指向的Node结点的key是同一个对象
+   3. key.equals(k)
+      或者不是同一个对象，但是它们的内容相同
+   4. 
+       #+begin_src java
+	 for (int binCount = 0; ; ++binCount){
+	     if ((e = p.next) == null){
+	 	 p.next = newNode(hash, key, value, null);
+	 	 if (binCount >= TREEIFY_THRESHOLD - 1)
+	 	     treeifyBin(tab, hash);
+	 	 break;
+	     }
+	     if (p.hash == hash && ((k = p.key) == key || (key != null && key.equals(k)))p.hash == hash && ((k = p.key) == key || (key != null && key.equals(k)))p.hash == hash && ((k = p.key) == key || (key != null && key.equals(k))))
+	 	break;
+	     p = e;
+	 }
+       #+end_src
+      1. e = p.next
+	 依次和该链表的每个元素比较后，都不相同，挂在最后
+      2. 第二个if
+	 如果有相同的情况，就直接break
+      3. if (binCount >= TREEIFY_THRESHOLD - 1)
+	 注意在把元素添加到链表后，立即判断 该链表是不已经达到8个结点
+	 注意，在转成红黑树时，要进行判断，如果该table数组大小<64，而是进行扩容
 * 错题
 1. 试写出以下代码的执行结果
    #+begin_src java
