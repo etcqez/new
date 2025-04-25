@@ -125,6 +125,70 @@
       3. if (binCount >= TREEIFY_THRESHOLD - 1)
 	 注意在把元素添加到链表后，立即判断 该链表是不已经达到8个结点
 	 注意，在转成红黑树时，要进行判断，如果该table数组大小<64，而是进行扩容
+** LinkedHashSet
+1. LinkedHashSet是HashSet的子类
+2. LinkedHashSet底层是一个LinkedHashMap，底层维护了一个数组+双向链表
+3. LinkedHashSet根据元素的hashCode值来决定元素的存储位置，同时使用链表维护元素的次序，这使得元素看起来是以插入顺序保存的
+4. LinkedHashSet不允许添加重复元素
+*** 结构
+1. 在LinkedHashSet中维护了一个hash表和双向链表(LinkedHashSet有head和tail)
+2. 每一个节点有pre和next属性，这样可以形成双向链表
+3. 在添加一个元素时，先求hash值，在求索引，确定该元素在hashtable的位置，然后将添加的元素加入到双向链表(如果存在，不添加)
+   #+begin_src java
+     tail.next = newElement;
+     newElement.pre = tail;
+     tail = newElement; // 尾结点指向新元素
+   #+end_src
+*** LinkedHashSet源码解读
+1. LinkedHashSet加入顺序和取出顺序一致
+2. 添加第一次时，直接将数组扩容到16
+3. =LinkedHashSet 的 table 表是HashMap$Node类型的，而 table 表里面的元素是 LinkedHashMap$Entry 类型=
+   1. 数组是 HashMap$Node[] 存放的元素是 LinkedHashMap$Entry类型
+   2. Entry继承了HashMap.Node，并提供了 before, after 属性
+      #+begin_src java
+	static class Entry<K,V> extends HashMap.Node<K,V>{
+	    Entry<K,V> before, after;
+	    Entry(int hash, K key, V value, Node<K,V> next){
+		super(hash, key, value, next);
+	    }
+	}
+
+      #+end_src
+** Map
+*** Map接口特点
+1. Map 中的 key 不允许重复，原因和HashSet一样
+2. Map 中的 value 可以重复，当有相同的k，就等价于替换
+3. Map 的 key 可以为空，value也可以为空，注意 key为空只能有一个，value为空可以有多个
+4. 常用字符串作为key，但key可以为任何类型
+*** HashMap源码分析
+1. table 表(数组)存放的元素是Node
+   #+begin_src java
+     static class Node<K, V> implements Map.Entry<K, V> {
+         final int hash;
+         final K key;
+         V value;
+         Node<K, V> next;
+         Node(int hash, K key, V valuee, Node<K,V> next){
+     	this.hash = hash;
+     	this.key = key;
+     	this.value = value;
+     	this.next = next;
+         }
+     }
+   #+end_src
+2. k-v 最后是 HashMap$Node node = newNode(hash, key, value, null)
+3. k-v 为了方便程序员遍历，还会创建 EntrySet 集合，该集合存放的元素的类型是 Entry，而一个Entry对象就朋k,v
+   transient Set<Map.Entry<K,V>> entrySet;
+   final class EntrySet extends AbstractSet<Map.Entry<K, V>>
+4. =entrySet中，定义的类型是 Map.Entry，但是实际上存放的还是HashMap$Node=
+   static class Node<K, V> implements Map.Entry<K, V>
+*** Map接口方法
+put, remove, get, size, inEmpty, clear, containsKey
+*** Map六大遍历方式
+1. Set keyset = map.keySet(); I map.get(key)
+   1. 迭代器 Iterable iterator = keyset.iterator();
+2. Collection values = map.values(); 只能遍历所有的值
+3.  Set entrySet = map.entrySet(); for(Object entry : entrySet) {Map.Entry m = (ap.Entry) entry;m.getKey();m.getValue();}
 * 错题
 1. 试写出以下代码的执行结果
    #+begin_src java
