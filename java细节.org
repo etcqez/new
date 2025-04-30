@@ -189,6 +189,71 @@ put, remove, get, size, inEmpty, clear, containsKey
    1. 迭代器 Iterable iterator = keyset.iterator();
 2. Collection values = map.values(); 只能遍历所有的值
 3.  Set entrySet = map.entrySet(); for(Object entry : entrySet) {Map.Entry m = (ap.Entry) entry;m.getKey();m.getValue();}
+*** HashMap源码解读
+1. 如果table的索引位置的key的hash值和新的key的hash值相同，并且满足现有的结点的key和准备添加的key是同一个对象 || equals返回真
+   就认为不能加入了
+   #+begin_src java
+     if (p.hash == hash && ((k = p.key) == key || (key != null && key.equals(k)))) e=p;
+        #+end_src
+2. e.value = value
+   替换 key对应的value
+*** Hashtable
+1. 存放的元素是键值对
+2. hashTable的 =键和值都不能为null= ，否则会抛出NullPointerException
+4. hashTable是线程安全的，hashMap是线程不安全的
+*** Properties
+1. 继承自Hashtable
+2. =键和值都不能为null= ，否则会抛出NullPointerException
+** 总结
+在开发中，选择什么集合实现类，主要取决于业务操作特点，然后根据集合实现类特性进行选择，分析如下：
+1. 先判断存储类型（一级对象【单列】或一组键值对【双列】）
+2. 一组对象【单列】：Collection接口
+   - 允许重复：List
+     - 增删多：LinkedList【底层维护了一个双向链表】
+     - 改查多：ArrayList【底层维护Object类型的可变数组】
+   - 不允许重复：Set
+     - 无序：HashSet【底层是HashMap，维护了一个哈希表 即（数组+链表+红黑树）】
+     - 排序：TreeSet
+     - 插入和取出顺序一致：LinkedHashSet【底层LinkedHashMap】，维护数组+双向链表
+3. 一组键值对【双列】：Map
+   - 键无序：HashMap【底层维护了一个哈希表 即（数组+链表+红黑树）】
+   - 键排序：TreeMap
+   - 键插入和取出顺序一致：LinkedHashMap
+   - 读取文件：Properties
+** TreeSet源码解读
+1. TreeSet 和 TreeMap 如果创建的时候没有传入比较器，则只能存放实现了 Comparable 接口的类对象，否则就会抛出类型转换异常
+2. treeSet.add 方法，如果TreeSet() 构造器没有传入Comparator，会把传入的对象转成Comparable类型，未实现会发生ClassCastException
+   #+begin_src java
+     ComparabLe<? super K> k = (Comparable<? super K>) key;
+   #+end_src
+3. 使用TreeSet提供的一个构造器，可以传入一个比较器，并指定排序规则
+4. TreeSet底层是TreeMap
+   #+begin_src java
+     public TreeSet(Comparator<? super E> comparator) {
+         this(new TreeMap<>(comparator));
+     }
+   #+end_src
+5. comparator是在TreeMap
+   #+begin_src java
+     public TreeMap(Comparator<? super K> comparator) {
+         this.comparator = comparator;
+     }
+   #+end_src
+6. 如果比较的结果等于0，则结果相同，key加不进去，值覆盖，但在TreeSet中值没有意义
+   #+begin_src java
+     Comparator‹? super K> cpr = comparator;
+     if (cpr != null) {
+     do {
+         parent = t;
+         cmp = cpr.compare(key, t.key);
+         if (cmp < 0)
+     	t = t.left;
+         else if (cmp > 0)
+     	t = t.right;
+         else //相同 值覆盖，key加不进去
+     	return t.setValue(value) ;
+     } while (t != null);
+   #+end_src
 * 错题
 1. 试写出以下代码的执行结果
    #+begin_src java
@@ -219,21 +284,72 @@ put, remove, get, size, inEmpty, clear, containsKey
      // 100.0 red
    #+end_src
 
-2.  
-    #+begin_src java
-      Set set = new HashSet();
-      set.add(new String("hi")); //ok
-      set.add(new String("hi")); //加入不了
-    #+end_src
+2. 
+   #+begin_src java
+     Set set = new HashSet();
+     set.add(new String("hi")); //ok
+     set.add(new String("hi")); //加入不了
+   #+end_src
 
+3. 
+   #+begin_src java
+     HashSet set = new HashSet();
+     Person p1 = new Person(1001,"AA");
+     Person p2 = new Person(1002,"BB");
+     set.add(p1);
+     set.add(p2);
+     p1.name="CC";
+     set.remove(p1); // p1 的属性发生变化，hash值发生变化，删除失败
+     sout(set); // 2个对象
+     set.add(new Person(1001,"CC")); // 可以加，因为hash值由1001和"CC"计算出的
+     sout(set); //3个对象
+     set.add(new Person(1001,"AA")); // 算出来的索引和p1一样，但p1属性被修改，所以相比之下内容并不同，会挂在p1后面
+     sout(set); //4个对象
+   #+end_src
 * 编程思想
 1. 在判断参数是否合法时
-   如：if((str != null)){ throw } // 如果为空则抛出异常
+   如：if(!(str != null)){ throw } // 如果为空则抛出异常
    1. 写出正确的情况
    2. 然后取反即可
 2. 如果有多个条件需要被满足，则过关斩将
    如：分别判断用户名、密码、邮箱格式是否正确
    if(!(userLength >= 2 && userLength <= 4)){ throw } //如果用户名不符合规则抛出异常
+** 零线通
+1. do-while 循环整个程序，在微循环外定义loop控制整个微循环
+2. 在循环外使用的变量定义在循环内
+3. switch-case 根据输入执行对应功能
+4. 循环外定义变量控制循环，如果输入yn退出内层循环，如果输入y退出外层循环
+   #+begin_src java
+     String choice = "";
+     while (true) {
+         System.out.println("你确定要退出吗? y/n");
+         choice = scanner.next();
+         if("y".equals(choice) || "n".equals(choice)) {
+     	break;
+         }
+     }
+     if(choice.equals("y")) {
+         loop = false;
+     }
+   #+end_src
+5. OOP版
+   1. 把变量变为属性
+   2. 把各个功能封装到方法
+** 房屋出租
+*** 程序框架图
+1. HouseView
+   1. 显示界面
+   2. 接收服务用户输入
+   3. 调用HouseService
+2. HouseService
+   1. 响应HouseView的调用
+   2. 完成对房屋信息的各种操作
+3. House
+   1. 一个House对象表示一个房屋信息
+*** House
+1. toString指定打印格式
+*** HouswService
+1. 定义一个House数组，保存House对象
 * 开发细节
 - 一个源文件最多只能有一个public类，其它类的个数不限
 - 只要有一个类，编译过后对应生成一个.class文件
@@ -860,3 +976,63 @@ enum Week{
 2. 不允许重复元素，所以最多包含一个null
 3. Set接口对象(Sete接口的实现类对象),存放数据是无序（即添加的顺序和取出的顺序不一致）
 4. 取出的顺序虽然不是添加的顺序，但是取出的顺序是固定的
+** Collects工具类
+reverse shuffle
+1. sort(list)
+   默认自然排序，可以传入比较器
+2. swap(list,int,int)
+   指定list集合中的i处元素和j处元素进行交换
+3. max min
+   可以传入比较器
+4. frequency
+   返回指定集合中指定元素出现的次数
+5. copy(List dest, List src)
+   将src的内容复制到dest中
+   为了完成一次完整的数组拷贝，我们先给dest赋值，大小和list.size()一样
+   因为底层 if(srcSize > dest.size()) 抛出IndexOutOfBoundsException
+   不能通过构造器指定容量，因为判断的是size，构造器指定的是底层数组的容量
+6. replaceAll
+   使用新值替换所有旧值
+** 集合练习
+1. 试分析HashSet和TreeSet分别如何实现去重的
+   1. HashSet的去重机制：hashCode() + equals(), 底层先通过存入对象，进行运算得到一个hash值通过hash值得到对应的索引，如果发现table索引所在的位置，没有数据，就直接存放，如果有数据，就进行equal比较【遍历比较】，不相同就加入，否则就不加入
+   2. TrwwSet的去重机制：如果你传入了一个Comparator匿名对象，就使用实现的compare去重，如果方法返回0，就认为是相同的元素，就不添加，如果你没有传入一个Compartor，则以你添加的对象实现的Compareable接口的compareTo去重
+* 泛型
+** 泛型的好处
+1. 编译时，检查添加元素的类型，提高了安全性
+2. 减少了类型转换的次数，提高了效率
+3. 不再提示编译警告
+** 泛型说明
+1. 泛型又称参数化类型，是Jdk5.0出现的新特性，解决数据类型的安坐性问题
+2. 在类声明或实例化时，只要指定好需要的具体的类型即可
+3. Java泛型可以保证如果程序在编译时没有发出警告，运行时就不会产生ClassCastExcepton异常
+4. 泛型的作用是：可以在类声明时通过一个标识表示类中某个属性的类型，或者是某个方法的返回值的类型，或者是参数类型
+** 泛型使用细节
+1. 只能是引用数据类型
+2. 在给泛型指定具体类型后，可以传入该类型或者其子类类型
+3. 如果不写泛型，默认就是Object
+** 自定义泛型细节
+1. 普通成员可以使用泛型（属性方法）
+2. 使用泛型的数组不能初始化
+3. 静态方法不能使用类的泛型
+4. 泛型类的类型，是在创建对象时确定的（因为创建对象时，需要指定类型）
+5. 如果在创建对象时，没有指定类型，默认为Object
+** 自定义泛型细节
+1. 接口中，静态成员也不能使用泛型
+   接口中的属性默认的修饰符是public final static，方法默认的修饰符是public abstract
+2. 泛型接口的类型，在继承接口或者实现接口时确定
+3. 没有指定类型，默认为Object
+** 自定义泛型方法
+- 基本语法
+  修饰符 <T,R> 返回类型 方法名(参数列表){}
+- 注意细节
+  1. 泛型方法，可以定义在普通类中，也可以定义在泛型类中
+  2. 当泛型方法被调用时，类型会确定
+  3. public void eat(E e){}, 修饰符后没有<T,R..> eat 方法不是泛型方法，而是使用了泛型
+** 泛型的继承和通配符
+1. 泛型不具备继承性
+   List<Object> list = new ArrayList<String>(); //对吗
+   不正确
+2. <?>: 支持任意泛型
+3. <? extends A>: 支持A类以及A类的子类，规定了泛型的上限
+4. <? super A>: 支持A类以及A类的父类，不限于直接父类，规定了泛型的下限
