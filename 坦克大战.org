@@ -1,0 +1,26 @@
+* java坐标体系
+   坐标原点位于左上角，以像素为单位
+* 绘图机制
+   1. MyPanel extends JPanel
+      1. 重写 paint方法
+   2. DrawCircle extends JFrame (main方法的类)，可以理解成是一个画框
+      1. 将panel加入frame
+   3. paint方法什么时候被调用
+      1. 第一次显示窗口时
+      2. 窗口最小化，再最大化
+      3. 窗口大小发生变化
+      4. repaint函数被调用
+* 画出区域
+1. g.fillRect(0, 0, 1000, 750);
+2. this.setSize(1000, 750);
+* 画出坦克
+1. 坦克由3个矩形，1个圆形，1条横线
+2. 坦克外形由坐标、方向、类型决定
+** 事件处理机制
+MyPanel extends JPanel implements KeyListener
+1. 当上、下、左、右按下时改变小球坐标
+2. 调用this.repaint();
+* 坦克动起来
+1. 在keyPressed中监听wasd被按下，修改坦克方向
+   1. 因为在keyPressed中需要改变坦克方向，所以不能定死，要么做成一个变量，或者做成成员属性
+2. 改变坦克坐标

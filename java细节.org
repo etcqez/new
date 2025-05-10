@@ -1036,3 +1036,112 @@ reverse shuffle
 2. <?>: 支持任意泛型
 3. <? extends A>: 支持A类以及A类的子类，规定了泛型的上限
 4. <? super A>: 支持A类以及A类的父类，不限于直接父类，规定了泛型的下限
+* 文件
+** 创建文件
+1. File file = new File(filePath)
+   还有创建文件的方式
+   1. new File(File parent, String child)
+   2. new File(String parent, String child)
+2. file.createNewFile()
+*** 获取文件信息
+getName getAbsolutePath getParent length exists isFile isDirectory 
+*** 创建目录与文件删除
+mkdir mkdirs(创建多级目录) delete删除空目录或文件
+在java中，目录也会被当做文件
+** IO流
+*** 原理及流的分类
+- 按操作数据单位不同分为：字节流(8bit)，字符流(按字符)
+- 按数据的流向不同分为：输入流，输出流
+- 按流的角色的不同分为：节点流，处理流/包装流
+*** FileInputString
+1. int read()
+   从该输入流读取一个字节的数据，如果没有输入可用，此方法将阻止。如果到达文件末尾，返回-1
+   #+begin_src java
+     while ((int readData = fileInputStream,read()) != -1) {
+         sout((char)readData)
+     }
+   #+end_src
+2. int read(byte[] b)
+   不次读取b个字节
+   #+begin_src java
+     while ((int readLen = fileInputStream,read(buf)) != -1) {
+         sout(new String(buf,0,readLen))
+     }
+   #+end_src
+*** FileOutputStream
+1. write(int b)
+   将指定的字节写入此文件输出流
+2. write(byte[] b)
+   将b.length个字节从指定的字节数组写入此文件输出流
+3. write(byte[] b, int off, int len)
+4. 追加
+   new FileOutputStream(filePath)
+*** FileReader同FileInputString
+*** FileReader使用后，必须关闭或刷新，否则写入不到指定的文件
+关闭文件流，等价于flush() + 关闭
+*** 节点流与处理流(也叫包装流)
+1. 节点流：可以从一个特定的数据源读写数据，如FileReader、FileWriter
+   1. 字节：FileInputString
+   2. 字符：FileRead
+   3. 数组：ByteArrayInputStream
+2. 处理流(也叫包装流)：是“连接” 在已存在的流(节点流或处理流)之上，为程序提供更为强大的读写功能，如BufferedReader、BufferedWriter
+**** 节点流和处理流的区别和联系
+1. 节点流是底层/低级流，直接跟数据源相接
+2. 处理流包装节点流，既可以消除不同节点流的实现差异，也可以提供更方便的方法来完成输入输出
+3. 好处
+   1. 性能的提高：增加缓冲
+   2. 操作的便捷
+**** 修饰器
+BufferedWriter有一个reader成员，指向了实现类，通过多态调用实现类有方法
+**** BufferedReader和BufferedWriter属于字符流，关闭时，只需要关闭外层流即可
+**** BufferedInputStream是字节流
+*** 对象流 ObjectInputStream和ObjectOutputStream
+**** 序列化与反序列化
+1. 序列化就是在保存数据时，保存数据的值和数据类型
+2. 反序列化就是在恢复数据时，恢复数据的值和数据类型
+3. 需要让某个对象支持序列化机制，则必须让某类是可序列化的，为了让某个类是可序列化的，该类必须实现如下两个接口之一：
+   1. Serialzable
+   2. Externalizable
+**** 注意事项和细节说明
+1. 序列化后如果类被修改，反序列化会出现异常(InvalidClassException)
+2. 反序列化后，对象是Object类型，如果调用对象的特有方法，需要向下转型，序列化的类必须同时同时在序列化和反序列化时能被访问，且为同一对象
+   将序列化的类公开，以便在序列化和反序列化时被看见
+3. 读写顺序要一致
+4. 要求实现Serializable
+5. 序列化的类中建议添加SerialVersionUID，为了提高版本的兼容性
+6. static和transient修饰和成员不参与序列化，参与序列化的成员需要实现序列化接口
+7. 序列化具备可继承性，也就是如果某类已经实现了序列化，则它的所有子类也已经默认实现了序列化
+*** 转换流 InputStreamReader和OutputStreamWriter
+当读取一个用gbk写入的文件，会乱码
+1. InputStreamReader(InputStream, Charset)
+   将InputStream包装成Reader
+   读取gbk编码的文件
+   #+begin_src java
+     //1. 把 FileInputStream 转成 InputStreamReader
+     //2.指定编码 gbk
+     InputStreamReader isr = new InputStreamReader(new FileInputStream(filePath), "gbk");
+     //3. 把 InputStreamReader 传入 BufferedReader
+     BufferedReader br = new BufferedReader(isr);
+   #+end_src
+2. OutputStreamWriter
+*** 打印流
+1. 字节打印流 PrintStream
+2. 字符打印流 PrintWriter
+3. 打印流只有输出流，没有输入流
+*** Properties类
+1. 配置文件格式
+   键=值
+   键=值
+2. 键值对不需要有空格，值不需要用引号引起来。默认类型是String
+3. 常见方法
+   1. 读取文件
+      1. properties.load(new FileReader("src\\mysql.properties"));
+	 加载指定配置文件
+      2. properties.list(System.out);
+	 把k-v显示控制台
+      3. properties.getProperty("user");
+   2. 写入文件
+      1. properties.setProperty("user", "汤姆");
+	 保存的是unicode码值
+      2. properties.store(new FileOutputStream("src\\mysql2.properties"), null);
+	 null是注释

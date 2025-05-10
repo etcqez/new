@@ -1,0 +1,250 @@
+* sql通用语法和分类
+1. sql数据库的sql语句不区分大小写，关键字建议使用大写
+2. 单行注释：--或##
+   多行注释：/* */
+** sql分类
+1. DDL：Data Definition Language
+   数据定义语言，用来定义数据对象(数据库，表，字段)
+2. DML：Manipulation
+3. DQL：Query
+4. DCL：Control
+   用来创建数据库用户、控制数据库的访问权限
+* DDL
+** 数据库操作 
+- 查询当前数据库
+  select database();
+- create database if not exists name;
+- drop database if exists name;
+** 表操作-查询
+- show tables;
+  查看当前数据库所有表
+- desc 表名;
+  查询表结构
+- show create table 表名;
+  建表语句
+- create table 表名(字段1 类型 comment 注释) comment 注释;
+  最后一个字段没有逗号
+** 数据类型
+1. 数值类型tinyint smallint mediumint int bigint float double decimal
+   1. age tinyint unsigned
+   2. score double(4,1)
+      4: 整体长度 1：小数部分
+2. 字符串类型
+   char varchar tinyblob tinytext blob text mediumblob mediumtext longblob longtext
+3. 日期类型
+   date time year datetime timestamp
+   1. birthday data
+** 表操作-修改
+- alter table 表名 add 字段名 类型(长度) comment 注释 约束;
+  添加字段
+- alter table 表名 modify 字段名 新数据类型(长度);
+  修改数据类型
+- alter table 表名 change 旧字段名 新字段名 类型(长度) comment 注释 约束;
+  修改字段名和字段类型
+- alter table 表名 drop 字段名;
+  删除字段
+- alter table 表名 rename to 新表名;
+  修改表名
+** 表操作-删除
+- 注意：在删除表时，表中的全部数据也会被删除
+- drop table if exists 表名;
+  删除表
+- truncate table 表名;
+  删除指定表，并重新创建该表
+* DML
+1. insert into 表名(字段名) value(值);
+   给指定字段添加数据
+2. insert into 表名 value(值);
+   给全部字段添加数据
+3. update 表名 set  字段=值 where;
+   update语句的条件可以有，也可以没有，条件如果没有，则会修改整张表的所有数据
+4. delete from 表名 where ;
+   delete语句的条件可以有，也可以没有，条件如果没有，则会删除整张表的所有数据
+   delete语句不能删除某一个字段的值(可以使用update)
+* DQL
+- 编写顺序
+  select from where group by having order by limit
+- 执行顺序
+  from where group by having select order by limit
+* DCL
+** 管理用户
+- 创建用户
+  create user '用户名'@'主机名' identified by '密码';
+- 修改用户密码
+  alter user '用户名'@'主机名' identified with mysql_native_password by '新密码';
+- 删除用户
+  drop user '用户名'@'主机名';
+** 权限控制
+- 常见的权限
+  all,all privileges select insert update delete alter(修改表) drop(删除数据库/表/视图) create(创建数据库/表)
+- 查询权限
+  show grants for '用户名'@'主机名';
+- 授予权限
+  grant 权限列表 on 数据库名.表名 to '用户名'@'主机名';
+- 撤销权限
+  revoke 权限列表 on 数据库名.表名 from '用户名'@'主机名';
+* 函数
+** 字符串函数
+1. lpad(str,n,pag)
+   左填充，用字符串pad对str的左边时行填充，达到n个字符串长度
+2. rpad
+*** 案例
+1. 由于业务需求变更，企业员工的工号，统一为5位数，目前不足5位数的全部在前面补0，比如：1号员工工号应该为00001
+   update emp set workno = lpad(workno, 5, '0');
+** 数值函数
+1. ceill floor 向上下向取整
+2. mod 模
+3. rand 返回0～1内的随机数
+4. round(x,y) 求参数x的四舍五入的值，保留y位小数
+*** 案例
+1. 通过数据库函数生成一个六位数随机验证码
+   select lpad(round(rand()*1000000,0),6,'0');
+** 日期函数
+curdate curtime now
+1. year(now())
+   获取指定date的年份
+2. date_add(now(), interval 70 day)
+   从当前时间向后推70天
+3. datediff('2021-12-01', '2021-11-01')
+   两个时间相差的天数(是用前面的时间减去后面的时间)
+*** 案例
+1. 查询所有员工的入职天数，并根据入职天数倒序排序
+   select name, datediff(curdate(), entrydate) as 'entrydays' from emp order by entrydays desc;
+** 流程函数
+1. if(true, 'ok', 'error') 类似三元表达式
+2. ifnull('ok', 'default') 判断第一个值是否为空。如果不为空，返回该值，如果为空，返回后面默认值
+3. case when thwn else end 类似switch case
+   - 查询emp表的员工姓名和工作地址(北京/上海 ----> 一线城市，其它 ----> 二线城市)
+     select name, (case workaddress when '北京' then '一线城市' when '上海' then '一线城市' else '二线城市' end) as '工作地址' from emp;
+*** 案例
+1. 统计班级各个学员的成绩，展示的规则如下：
+   - >=85，展示优秀
+   - >=60，展示及格
+   - 否则，展示不及格
+     (case when math >= 85 then '优秀' when math >= 60 then '及格' else '不及格' end) '数学'
+* 约束
+约束是作用于表中字段上的规则，用于限制存储在表中的数据
+** 分类
+非空约束(not null) 唯一约束(unique) 主键约束(primary key) 外键约束(foreign key)
+- 默认约束(default)
+  保存数据时，如果未指定该字段的值，则采用默认值
+  status char(1) default '1' comment '状态'
+- 检查约束(check) 8.0.16版本之后
+  保证字段值满足某一个条件
+  age int check ( age > 0 && age <= 120 ) comment '年龄'
+** 外键
+- 修改外键
+  alter table 表名 add constraint 外键名称 foreign key(外键字段名) references 主表(主表列名);
+- 删除外键
+  alter table 表名 drop foreign key 外键名称;
+*** 删除/更新行为
+- no action/restrict
+  不允许
+- cascade 级联删除
+  当在父表中删除/更新对应记录时，首先检查该记录是否有对应外键，如果有，则也删除/更新外键在子表中的记录。
+- set null
+  当在父表中删除对应记录时，首先检查该记录是否有对应外键，如果有则设置子表中该外键值为null(这就要求该外键允许取null)。
+- set default
+  父表有变更时，子表将外键列设置成一个默认的值(Innodb不支持)
+- 使用
+  alter table 表名 add constraint 外键名称 foreign key(外键字段名) references 主表(主表列名) on update cascade on delete cascade;
+* 子查询
+- 根据子查询结果不同，分为：
+  1. 标量子查询
+  2. 列子查询
+  3. 行子查询
+  4. 表子查询
+- 根据子查询位置,分为：where之后、from之后、select之后
+** 列子查询
+子查询返回的结果是一列(可以是多行)，这种子查询称为列子查询
+*** 常用的操作符：in、not in、any、some、all
+- IN 
+  在指定的集合范围之内，多选一
+- NOT IN
+  不在指定的集合范围之内
+- ANY
+  子查询返回列表中，有任意一个满足即可
+- SOME
+  与ANY等同，使用SOME的地方都可以使用ANY
+- ALL
+  子查询返回列表的所有值都必须满足
+*** 案例
+1. 查询“销售部”和“市场部”的所有员工信息
+   1. 查询“销售部”和“市场部”的部门id
+      select id from dept where name = '销售部' or name = '市场部';
+   2. 根据部门id，查询员工信息
+      select * from emp where dept_id in (2,4)
+   3. 结果
+      select * from emp where dept_id in (select id from dept where name ='销售部'or name ='市场部');
+2. 查询比财务部所有人工资都高的员工信息
+   1. 查询所有财务部人员工资
+      select id from dept where name = '财务部';
+      select salary from emp where dept_id = (select id from dept where name =‘财务部");
+   2. 比财务部所有人工资都高的员工信息
+      select * from emp where salary > all ( select salary from emp where dept_id = (select id from dept where name = '财务部') );
+3. 查询比研发部其中任意一人工资高的员工信息
+   1. 查询研发部所有人工资
+      select salary from emp where dept_id =(select id from dept where name = '研发部');
+   2. 比研发部其中任意一人工资高的员工信息
+      Select * from emp where salary > any ( select salary from emp where dept_id = (select id from dept where name = '研发部') );
+** 行子查询
+子查询返回的结果是一行(可以是多列)，这种子查询称为行子查询
+常用的操作符：=、<>、in、not in
+*** 案例
+1. 查询与“张无忌” 的薪资及直属领导相同的员工信息
+   1. 查询“张无忌”的薪资及直属领导
+      select salary, managerid from emp where name = '张无忌';
+   2. 查询与“张无忌” 的薪资及直属领导相同的员工信息
+      1. select * from emp where salary = 12500 and managerid = 1;
+      2. 另一种写法：select * from emp where (salary,managerid) = (12500,1);
+      3. 综上：select * from emp where (salary,managerid) = (select salary, managerid from emp where name = '张无忌');
+** 表子查询
+常用的操作符：in
+*** 案例
+1. 查询与“鹿杖客”，“宋远桥”的职位和薪资相同的员工信息
+   1. 查询“鹿杖客”，“宋远桥”的职位和薪资
+      select job, salary from emp where name = '鹿杖客' or name = ‘宋远桥';
+   2. 查询与“鹿杖客”，“宋远桥”的职位和薪资相同的员工信息
+      select * from emp where (job,salary) in ( select job, salary from emp where name = '鹿杖客' or name = '宋远桥');
+2. 查询入职日期是“2006-01-01”之后的员工倍息，及其部门倍息
+   1. 入职日期是“2006-01-01”之后的员工倍息
+      select * from emp where entrydate > '2006-01-01';
+   2. 查询这部分员工，对应的部门信息;
+      select e.*, d.* from (select * from emp where entrydate > '2006-01-01') e left join dept d on e.dept_id = d.id ;
+* 多表查询练习
+1. 查询低于本部门平均薪资的员工信息
+   1. 查询指定部门平均薪资 1
+      select avg(e1.salary) from emp e1 where e1.dept_id = 1;
+   2. select * from emp e2 where e2.salary <  ( select avg(e1.salary) from emp el where e1.dept_id = e2.dept_id );
+      子查询+自连接
+2. 查询所有部门信息，并统计部门的员工人数
+   select d.id, d.name, ( select count(*) from emp e where e.dept_id = d.id )'人数' from dept d;
+3. 查询所有学生的选课情况，展示出学生名称，学号，课程名称
+   select s.name , s.no , c.name from student s , student_course sc , course c where s.id = sc.studentid and sc.courseid = c.id;
+* 事务
+** 事务四大特性
+1. 原子性(Atomicity):事务是不可分割的最小操作单元，要么全部成功，要么全部失败。
+2. 一致性(Consistency):事务完成时，必须使所有的数据都保持一致状态。
+3. 隔离性(Isolation):数据库系统提供的隔离机制，保证事务在不受外部并发操作影响的独立环境下运行。
+4. 持久性(Durability):事务一旦提交或回滚，它对数据库中的数据的改变就是永久的。
+** 并发事务问题
+- 脏读
+  一个事务读到另外一个事务还没有提交的数据。
+- 不可重复读
+  一个事务先后读取同一条记录，但两次读取的数据不同，称之为不可重复读。
+- 幻读
+  一个事务按照条件查询数据时，没有对应的数据行，但是在插入数据时，又发现这行数据已经存在，好像出现了”幻影”。
+** 4种隔离级别
+1. Read uncommitted
+   性能高
+2. Read committed
+   解决脏读
+3. Repeatable Read(默认)
+   解决不可重复读
+4. Serializable
+   解决幻读
+** 命令
+- 查看事务的隔离级别
+  select @@transaction_isolation;
+- set session transaction isolation level read uncommitted
+  修改隔离级别

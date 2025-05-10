@@ -4,3 +4,41 @@
 2. js的隐形参数argments
    arguments 是 JavaScript 函数中的一个特殊对象，它包含了函数被调用时传入的所有参数。这是一个历史遗留特性，在现代 JavaScript 中有更好的替代方案。
    python 没有
+3. js正则
+   #+begin_src js
+     var emailPattern = /[\w-]+@([a-zA-Z]+\.)+[a-zA-Z]+$/;
+     if(!emailPattern.test(form2.email.value)){
+         alert("电子邮件格式不正确")；
+         return false;
+     }
+     return true;  
+   #+end_src
+** dom
+*** chilNodes换行也算作节点
+1. 获取所有的sport复选框
+   var sports document.getElementsByName("sport");
+   1. 反选
+      1. 
+	  #+begin_src js
+	    for (var i = 0； i < sports.length; i++) {
+	        if(sports[i].checked){//js只要有内容就为true
+	    	sports[i].checked = false;
+	        } else {
+	    	sports[i].checked=true;
+	        }
+	  #+end_src
+      2. sports[i].checked = !sports[i].checked;
+2. if(sports[i]. checked){//js只要有内容就为true
+3. 获取所有的img标签
+   var imgs document.getElementsByTagName("img");
+4. 创建一个图片节点
+   var img = document.createElement("img");
+   1. 放在页面
+      document.body.appendChild(img);
+5. 查找id=language 下的所有li节点
+   var lis = document.getElementById("language").getElementsByTagName("li");
+6. 返回id=sel01 的所有子节点
+   var childNodes = document.getElementById("sel01").childNodes;
+   childNodes获取的是object text 和 object htmloptionelement，如果不希望得到text对象，需要将所有的内容放在一行
+7. 获取第一个子节点 firstChild
+   是按照childNodes得到的第一个子节点，可能为 object text
