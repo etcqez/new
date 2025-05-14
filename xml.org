@@ -1,0 +1,31 @@
+* xml语法
+- 每个xml文档必须有且只有一个根元素
+- 标签区分大小写，不能以数字开头
+* CDATA
+如果希望把某些字符串，当做普通文本，使用CDATA
+#+begin_src xml
+  <![CDATA[
+    	 <script data-compress=strip>
+  	 function h(obj){
+  	 obj.style.behavior='url(#default#homepage)'; var a =obj.setHomePage('//www.baidu.com/'); }
+  	 </script>
+  ]]>
+#+end_src
+* dom4j
+- 读
+  - document.getRootElement().elements("student");
+    获取所有根下面有所有节点对象
+  - elemment("age")
+    获取一个节点对象
+- 写
+  - DocumentHelper.createElement("student")
+    创建一个节点对象
+  - addAttribute("id", "04")
+    设置属性
+  - setText()
+    设置文本
+  - 节点对象.add(节点对象)
+    把一个节点对象加入到另一个节点对象
+  - stu.getParent().remove(stu)
+    删除元素stu，先得到stu的父节点，再把stu从父节点移除
+    

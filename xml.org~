@@ -1,0 +1,14 @@
+* xml语法
+- 每个xml文档必须有且只有一个根元素
+- 标签区分大小写，不能以数字开头
+* CDATA
+如果希望把某些字符串，当做普通文本，使用CDATA
+#+begin_src xml
+  <![CDATA[
+    	 <script data-compress=strip>
+  	 function h(obj){
+  	 obj.style.behavior='url(#default#homepage)'; var a =obj.setHomePage('//www.baidu.com/'); }
+  	 </script>
+  ]]>
+#+end_src
+* dom4j
