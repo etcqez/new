@@ -24,3 +24,77 @@ MyPanel extends JPanel implements KeyListener
 1. 在keyPressed中监听wasd被按下，修改坦克方向
    1. 因为在keyPressed中需要改变坦克方向，所以不能定死，要么做成一个变量，或者做成成员属性
 2. 改变坦克坐标
+* 线程
+** 创建线程的两种方式
+1. 继承Thread类，重写run方法
+   1. Thread实现了Runnable接口的run方法
+   2. start()启动线程
+2. 实现Runnable接口，重写run方法
+   1. 创建Thread对象，传入Runnable接口对象
+** 多线程机制
+主线程结束，如果子线程还在运行，并不会造成应用程序的结束，只有所有线程都结束了，才会造成进程结束
+** 为什么要调用start来调用run方法
+1. 如果直接调用run方法，并没有真正的开线程
+2. 当调用start()方法时，底层调用了start0()，start0()是本地方法，由JVM调用，底层是c/c++实现
+3. 直正实现多线程的效果，是start0()，而不是run
+** 为什么调用start()能把Runnable接口对象的run()调用
+1. 底层使用了代理模式
+** 继承Thread vs 实现Runnable的区别
+1. 没有本质区别，Thread类本身就实现了Runnable接口
+2. 实现Runnable接口方式更加适合多个线程共享一个资源的情况，并且避免了单继承的限制，建议使用Runnable
+   #+begin_src java
+     T3 t3= new T3("hello");
+     Thread thread01 = new Thread(t3);
+     Thread thread02 = new Thread(t3);
+     thread01.start();
+     thread02.start();
+
+     System.out.println("主线程完毕");
+   #+end_src
+   - T3实现了Runnable接口
+
+   - 可以让两个线程执行T3的run，共享T3一个对象
+** 通知线程退出
+1. 子线程的run方法不断循环，通过设置loop=false来终止
+2. 子线程提供方法来设置loop
+3. 主线程调用方法
+** 线程常用方法
+setName(设置线程名称) getName start run setPriority getPriority sleep interrupt(中断线程睡眠)
+- yield
+  线程的礼让。让出cpu，让其他线程执行，但礼让的时间不确定，所以也不一定礼让成功
+- join
+  线程的插队，插队一旦成功，则肯定先执行插入的线程所有的任务
+  谁调用执行谁
+** 守护进程
+如果我们希望当main线程结束后，子线程自动结束，只需将子进程设置为守护进程即可
+setDaemon(true)
+** 线程的七大状态
+1. new
+   尚未启动的线程处于此状态
+2. runnable
+   分为ready和running
+3. blocked
+   等待进入同步代码块的锁
+4. waiting
+   wait() join()
+5. timed_waiting
+   sleep()
+6. terminated
+   已退出的线程处于此状态
+** 互斥锁
+- synchronized 修饰的方法是一个同步方法，锁对象是this
+- 如果是静态的同步方法的锁为当前类本身
+- 静态方法中的同步代码块
+  synchronized(类名.class)
+*** 死锁
+在一个民步代码块抢两个锁。另一个代码也抢两个，而且它们两个互抢
+*** 释放锁
+1. 同步代码块结束
+2. 同步代码块遇到break, return
+3. 同步代码块出现了未处理的Error或Exception
+4. 调用wait()
+**** 下面的操作不会释放锁
+1. 调用sleep() yield()
+2. suspend() resume()，方法过时不推荐使用
+
+
