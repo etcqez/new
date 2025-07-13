@@ -1,0 +1,441 @@
+* java后端经典三层架构
+使用分层模式模式：分层的目的是为了解耦，降低代码的耦合度，有利项目的维护和升级
+1. web层/视图层/View
+   功能
+   1. 接收用户请求
+   2. 调用Service层,完成业务处理
+   3. 返回响应数据
+   4. 可能做重定向、转发
+      技术-多元
+      1. html
+      2. css
+      3. js
+      4. jquery
+      5. vue/其它框架
+      6. servlet => 在服务端解析
+      7. springmvc => 在服务端解析
+2. Service层/业务层
+   功能
+   1. 完成各种业务处理 提供很多业务API(方法)
+      技术-单纯
+      1. Java技术
+      2. Spring
+3. DAO层/数据层/数据持久层
+   功能
+   1. 完成对数据库的操作
+   2. 经典的就是CRUD
+      技术-多元
+      1. JDBC
+      2. DBUtils(数据库连接池)
+      3. JdbcTemplate
+      4. MyBatis
+      5. Mybatus-Plus等等
+4. web/servlet/controller/handler包属于web层
+5. pojo/entity/domain/bean包属于实体层
+* MVC
+1. MVC全称：Model模型、View视图、Controller控制器
+2. MVC最早出现的JavaEE三层中的 =Web层= ，它可以有效的指导WEB层的代码如何有效分离、单独工作
+3. Controller控制器：只负责接收请求，调用业务层的代码处理请求，然后派发页面，是一个“调度者”的角色
+4. Model 模型:将与业务逻辑相关的数据封装为具体的JavaBean类，其中不掺杂任何与数据处理相关的代码(JavaBean/Domain/ Pojo)
+5. 流程
+   1. 控制器接收浏览器数据
+   2. 模型把数据(Service、DAO层得到的数据)封装bean交给控制器
+   3. 控制器将数据交给视图
+   4. 视图再交给浏览器
+6. 什么是MVC
+   1. M：model，表示数据，由javabean充当，通过service-dao来获取
+   2. V：view，表示界面，用于展示数据
+   3. C：controller，表示接收数据，由servlet充当，调用service，完成业务处理
+* 注意事项
+1. 工具类 JDBCUtilsByDruid 需要修改
+   properties.load(JDBCUtilsByDruid.class.getClassLoader().getResourceAsStream("druid.properties"))
+* 代码
+** 功能
+1. 注册：queryMemberByUsername saveMember
+2. 登录：queryMemberByUsernameAndPassword
+** 技巧
+1. 编写sql语句在数据库软件中测试，减少不必要的编写错误
+2. 每编写完一个DAO方法，都test一下
+** MemberDAOImpl
+1. queryMemberByUsername(String username)
+   querySingle(sql, Member.class, username)
+2. saveMember(Member member)
+   update(sql, member.getUsername,..)
+3. queryMemberByUsernameAndPassword(String username, String password)
+   querySingle(sql, Member.class, username, password)
+** MemberServiceImpl
+1. registerMember(Member member)
+2. isExistUsername(String username)
+3. Member login(Member member)
+** RegisterServlet
+extends HttpServlet
+1. doPost
+   1. getParameter("username")
+   2. queryMemberByUsername, 判断用户名是否可用，不可用就 转发到注册页面
+      if(!memberService.isExistUsername(username))
+   3. saveMember, 判断是否注册成功
+      if(memberService.registerMember(member))
+   4. 请求转发到 register_ok，否则转发到 register_fail
+** LoginServlet
+1. queryMemberByUsernameAndPassword, 封装member对象，调用 login
+2. 判断返回值是否为空，分别转发到 login.html login_ok.html
+3. 登录失败回显用户名，登录页面必须是jsp
+   1. 将错误信息和 username 放入 request 域
+   2. login.jsp中
+      1. ${requestScope.msg}
+      1. 将input的value改为 ${requestScope.name}
+* Servlet合并
+1. 为什么需要
+   每个请求对应一个Servlet类，造成类太多，能否合并为一个MemberServlet
+2. 方案1
+   前端使用post传递一个参数，后端根据参数完成执行代码
+   1. 在前端新增一个隐藏的input name为action，value为register或者login代表请求动作
+   2. 后端根据action获得请求动作value, 根据value来判断调用哪个方法
+   3. 将之前的Servlet类封装成方法
+3. 方案2
+   使用模板设计模式
+   =注意，浏览器请求的依然是 MemberServlet，而不是 BasicServlet，是根据xml配置的路径决定的=
+   1. 创建抽象类 BasicServlet 继承 HttpServlet 实现 doPost方法
+   2. MemberServlet 继承 BasicServlet
+   3. 父类还是判断action的值
+   4. 利用反射，根据不同的值创建不同的方法
+* 显示家居
+** 在 /manager/furn 登录成功后，点击显示家居
+1. Lisrt<Furn> furns = furnService.queryFurns();
+2. 将查询到的集合放入request域，后面请求转发后可使用该数据渲染页面
+3. 请求转发到jsp页面
+* 添加家居可能存在的问题
+1. 后端的数据中文乱码
+   在 BasicServlet 设置 encode
+2. 刷新时重复添加
+   不要用转发，改用重定向，因为重定向是两次请求，浏览器的地址栏会改变
+3. 后端需要进行数据校验
+   将 前端参数封装成javabean的部分 用 try catch
+* BeanUtils 自动封装 Bean
+将前端提交的参数封装bean对象 要求参数名和bean的属性名必须一致
+1. 引入包 commons-beanutils.jar commons-logging.jar
+2. BeanUtils.populate(bean对象, req.getParameterMap())
+** 当存在前端没有提交的数据时，bean对象的属性值默认为空，会报错
+1. 在有参构造中 if(!(null == imgPath || "".equals(imgPath))) {this.imgPath = imgPath}
+2. 给 imgPath 属性一个默认值
+* 删除家居
+1. 点击删除家居，将id提交到后端
+2. 给删除家居a标签绑定一个点击事件
+3. 从这个a标签向上找到家居名称并取得文本
+* 修改家居
+当点击修改图标，跳到修改页面，修改完成后，重新刷新显示家居列表
+dao层应该提供两个方法，一个查询方法，一个修改方法
+** 点击修改家居链接，回显该家居信息
+FurnServlet的showFurn()
+1. 获取要显示的家居id
+2. 调用FurnService.queryFurnById(id)，得到furn对象，并放入到request
+3. 请求转发到furn_update.jsp
+4. 在furn_update.jsp，使用${requestScope.furn.name}取出数据
+** 点击修改家居，提交修改后的数据
+*** 前端如何将参数发送到后端
+因为是post请求，所以我们需要使用隐藏域id，action
+1. <input type="hidden" name="id" value="${requestScope.furn.id}">
+   因为id没有在表单中，所以将id传过去
+2. <input type="hidden" name="action" value="update">
+   对应后端调用的方法名
+*** 后端
+1. 封装成furn对象
+2. 调用FurnService.updateFurn()
+3. 修改成功后，重定向，刷新显示家居列表
+* 家居管理后台分页
+** 建立分页模型 Page.java
+   1. pageNo
+      表示显示当前页
+   2. pageSize
+      表示每页显示几条记录
+   3. pageTotalCount
+      表示共有多少页，它是计算得到的
+   4. totalRow
+      表示共有多少记录
+   5. private List<T> items
+      表示当前页，要显示的数据
+   6. url
+      分页导航的字符串
+   7. 因为每页显示多少条记录，是其它地方也可以使用
+      public static final Integer PAGE_SIZE = 3
+      pageSize = PAGE_SIZE
+** 怎么把数据填充进去
+原则：哪些数据是从数据库中拿出来的就把它交给dao
+*** dao层填充
+totalRow items
+1. getTotalRow()
+   #+begin_src java
+     String sql= "SELECT COUNT(*) FRQM ‘furn'";
+     //return (Integer) queryScalar(sil);=> cast异常
+     return ((Number) queryScalar(sql)).intValue();
+   #+end_src
+   - Long 不能转成 Integer，因为两者没有继承关系
+2. getPageItems(int begin, int pageSize)
+   #+begin_src java
+     String sql = "SELECT 'id', ‘name’, ‘maker', ‘price', 'sales', ‘stock',"+
+         "'img_path’ imgPath FROM furn LIMIT ?，?";
+     return queryMulti(sql, Furn.class, begin, pageSize)
+   #+end_src
+*** service层
+1. Page page(int pageNo, int pageSize)
+   #+begin_src java
+     Page<Furn>  page = new Page<>();
+     page.setPageNo(pageNo);
+     page.setPageSize(pageSize);
+     int totalRow = furnDAO.getTotalRow();
+     page.setTotalRow(totalRow);
+     // pageTotalCount是计算得到的
+     int pageTotalCount = totalRow / pageSize;
+     if(totalRow % pageSize > 0) {
+         pageTotalCount += 1;
+     }
+     page.setPageTotalCount(pageTotalCount);
+     //begin表示从哪条记录开始查，是通过 pageNo 和 pageSize 得到的
+     //这里隐藏一个坑
+     int begin = (pageNo - 1) * pageSize;
+     List<Furn> pageItems = furnDAO.getPageItems(begin, pageSize);
+     page.setItems(pageItems);
+     //还差一个url => 分页导航。先放一放
+     return page;
+   #+end_src
+** web层
+1. 从请求参数获取 pageNo pageSize
+2. 调用service方法，获取Page对象
+3. 将page放入到request域
+4. 请求转发到furn_manager.jsp
+5. 在furn_manager页面取出page
+   ${requestScope.page.items} 其实调用了 getItems()
+** 导航
+*** 上页下页
+1. 如果当前页大于1，显示上一页
+2. 如果当前页小于总页数，显示下一页
+*** 显示所有分页数
+1. 先确定开始页begin 第1页
+   <c:set var="begin" value="1"/>
+   c:set标签往域中添加数据，没有指定scope就只作用于当前页
+2. 再确定结束页数end 第pageTotalCount页
+   <c:set var="end" value="${requestScope.page.pageTotalCount}"/>
+3. 生成页数
+   #+begin_src html
+     <c:forEach begin="${begin}" end="${end}" var="i">
+       <li><a href="#">${i}</a></li>
+     </c:forEach>
+   #+end_src
+4. 如果i是当前页，就使用class="active"修饰
+   #+begin_src html
+     <c:forEach begin="${begin}" end="${end}" var="i">
+       <c:if test="${i == requestScope.page.pageNo}">
+         <li><a class="active" href="#">${i}</a></li>
+       </c:if>
+       <c:if test="${i != requestScope.page.pageNo}">
+         <li><a href="#">${i}</a></li>
+       </c:if>
+     </c:forEach>
+   #+end_src
+5. 给a标签加上跳转页面 的链接
+   <li><a href="manage/furnServlet?action=page&pageNo=${i}">${i}</a></li>
+** 修改后回到原来的页面
+1. 在furn_manager.jsp修改 修改按钮的超链接，携带id和pageNo
+2. 在FurnServlet.java的showFurn()，将pageNo 保存到request
+3. 在furn_update取出
+=实际没有这么麻烦=
+1. 如果请求带来的参数 pageNo=1，而且是请求转发到下一个页面，在下一个页面可以通过 param.pageNo
+2. 在furn_update，添加一个隐藏域，用来提交未出现在表单中的数据， id action=update pageNo
+   <input type="hidden" name="pageNo" value="${param.pageNo}">
+3. 在FurnServlet.java的updata()带上action=page&pageNo
+** 删除添加后返回原页面
+*** 删除
+1. 在furn_manage.jsp，给删除的超链接增加参数pageNo
+2. 在FurnServlet.java的del()，请求转发到page
+*** 添加
+1. 在furn_manage.jsp，给添加的超链接增加参数pageNo
+2. 点击添加链接，会跳转到furn_add.jsp
+3. 在furn_add.jsp，添加表单的请求是post请求，增加一个隐藏域pageNo
+   <input type="hidden" name="pageNo" value="${param.pageNo}">
+   =param.pageNo获取请求参数中的pageNo=
+4. 在FurnServlet.java的add()，请求转发到page
+* 首页分页
+1. 新建一个 CustomerFurnServlet.java
+2. 编写page方法，和之前和类似，只有转发的页面改变 /views/customer/index.jsp
+3. 用户请求首页 index.jsp 配置跳转
+   <jsp:forward page="/customerFurnServlet?action=page&pageNo=1"></jsp:forward>
+4. CustomerFurnServlet 转发到 /views/customer/index.jsp
+5. 在index.jsp中，使用c:forEach 遍历 ${requestScope.page.items}
+6. 将之前分页拷贝到index.jsp，修改提交到customer的page，不要提交到manager
+* 首页搜索
+1. 顾客进入首页页面
+2. 点击搜索按钮，可以输入家居名
+3. 正确显示分页导航条，并且要求在分页时，保留上次搜索条件
+** dom层
+1. getTotalRowByName(String name)
+   #+begin_src java
+     String sql= "SELECT COUNT(*) FROM ‘furn’ WHERE ‘name’LIKE ?";
+     return ((Number)queryScalar(sql, "%"+ name + "%")).intValue();
+   #+end_src
+2. getPageItemsByName(int begin, int pageSize, String name)
+   #+begin_src java
+     String sql = "SELECT 'id', ‘name’, ‘maker', ‘price', 'sales', ‘stock',"+
+         "'img_path’ imgPath FROM furn WHERE `name` LIKE ? LIMIT ?，?";
+     return queryMulti(sql, Furn.class, "%"+ name + "%", begin, pageSize)
+   #+end_src
+** service层
+1. pageByName(int pageNo, int pageSize, String name)
+   所有的方法都替换为  ByName
+** web层
+1. pageByName()
+2. 获取前端参数 name
+3. 所有的方法都替换为  ByName
+*** 如何解决空串、空值
+空串不需要解决，如果是空串，过滤条件就是 %%
+如果没有前端这个参数，在获取前端参数时 if(null == name) {name = "";}
+** jsp页面
+1. 搜索表单中增加两个隐藏域 action name
+2. 其它的参数 pageNo pageSize 可以不携带，因为不默认值
+** 点击分页时，保留搜索条件
+1. 搜索表单是发送给servlet，只有servlet知道搜索的是什么，所以在servlet这个地方记录下来，再返回给超链接
+2. StringBuilder url = new StringBuilder("customerFurnServlet?action=pageByName")
+3. 在servlet判断 if(!"".equals(name)) 如果不为空就拼接name
+4. page.setUrl(url.toString())
+5. 上一页链接需要从page.url取出
+*** 解决两个奇怪的问题
+1. 浏览器发请求 /jiaju_mail/furnServlet, 为什么请求FurnServlet.page时，同时请求了CustomerFurnServlet.page
+   1. 在浏览器调试界面可以看到，浏览器发出发一个请求首页 /jiaju_mail
+      1. 首页重定向到 customerFurnServlet 会导致CustomerFurnServlet.page被调用
+   2. 观察到首页的发起者是 img，referer是 jiaju_mail/manage/furnServlet，说明请求是从这个页面发出的
+   3. 找到这个网址对应的jsp页面，发现 <img src="#">
+      1. 会导致当前页被请求，而当前页是参考的是base
+2. 为什么请求首页后，分页404
+   1. 请求首页，会被重定向到page方法，但是这个方法中没有给page指定url
+   2. 解决方法，把首页重定向到 pageByName
+* 根据登录状态显示菜单
+需求说明：
+1. 登录成功时，显示欢迎某某某
+2. 返回首页时，如果登录过，显示欢迎某某某，如果没有登录过，显示登录注册
+分析：
+1. 登录成功后，要把数据库查到的member对象存到session
+2. 从 login_ok.jsp 中取出session中的member
+** 首页显示欢迎
+1. member为空显示登录注册
+   <c:if test="${empty sessionScope.member}">
+2. member不为空显示，取出member
+   <c:if test="${not empty sessionScope.member}">
+* 注销登录
+需求说明：
+1. 会员登录成功后
+2. login_ok.jsp点击安全退出，注销登录
+3. 返回首页，也可点击安全退出，注销登录
+分析：
+1. servlet中定义一个logout方法，将session销毁即可
+   1. req.getSession().invalidate();
+2. 重定向到index.jsp中，刷新首页
+   1. resp.sendRedirect(req.getContextPath());
+* 验证码
+需求说明：
+1. 提交完表单。服务器使用请求转发进行页面跳转。用户刷新(F5)，会发起最后一次的请求，造成表单重复提交问题。解决:用重定向
+2. 用户正常提交，由于网络延迟等原因，未收到服务器的响应，这时，用户着急多点了几次提交操作，也会造成表单重复提交。解决:验证码
+3. 用户正常提交，服务器也没有延迟，但是提交完成后，用户回退浏览器。重新提交。也会造成表单重复提交，解决:验证码
+4. 恶意注册,使用可以批量发送Http的工具,比如 Postman, Jemeter等...,使用验证码防护
+实现
+1. 引入kaptcha.jar，并配置好路由
+2. 在验证码输入框后面加入img标签，src指向配置好的路由
+3. 给图片绑定点击事件，修改scr的地址
+4. =注意：当src没有修改时，浏览器不会再次发起请求，可以携带一个变化的参数，如：d=new Date()=
+后端
+1. 取出session中的验证码
+   String token = (String)request.getSession().getAttribute(KAPTCHA_SESSION_KEY);
+2. 立即删除session验证码，防止该验证码被重复使用
+   request.getSession().removeAttribute(KAPTCHA_SESSION_KEY);
+3. 比对前端传过来的验证码和session中的以验证码
+   if(token!=null && token.equalsIgnoreCase(code))
+* 购物车
+1. 设计说明
+   1. 这个购物车是Session版，不是数据库版，因此直接放在Entity/POJO，将Cart当做一个数据模型来对待
+     如果希望将购物车放入mysql，将设计好的Cart数据模型改成一张表即可
+2. 数据模型CartItem
+   Integer id, name, BigDecimal price, Integer count, BigDecimal totalPrice
+3. 数据模型Cart
+   就是购物车，包含多个CartItem
+   1. 属性
+      使用HashMap来保存 key为id HashMap<Integer, CartItem> items
+   2. 方法
+      1. addItem(CartItem cartItem)
+	 添加家居
+** CartServlet
+1. addItem()
+   1. 获取前端提交的id，如果数据不对就给0，因为0商品是不存在的
+   2. 从数据库查询id对应的商品对象
+   3. 如果查询到的商品为空，就return
+      =先把正常的逻辑走完，再处理异常情况=
+   4. 根据furn构建CartItem
+   5. 从session中获取cart对象
+      Cart cart = (Cart)req.getSession().getAttribute("cart");
+   6. if (null == cart)，就new Cart并放入session
+   7. cart.addItem(item)
+2. 显示购物车数量
+   1. 在方法getTotalCount()遍历累加CartItem中的count
+   2. 前端使用${sessionScope.cart.totalCount}取中
+   3. =注意：${sessionScope.cart.totalCount}本质是调用getTotalCount()，所以累加时首先要清0=
+3. 为什么点击添加购物车会影响显示的数量
+   因为向服务器重定向到了主页，主页请求了数量
+** 显示购物车
+1. 显示家居项
+   1. <c:if test="${not empty sessionScope.cart.items}">
+      Cart类必须要有getItems
+   2. 对 sessionScope.cart.items 进行循环
+   3. =循环出来的变量不是items，是enrtry，entry的key是家居id，value才是item=
+2. 计算总价
+   在Cart类提供一个方法getCartTotalPrice()
+** 修改购物车
+1. Cart.updateCount(int id, int count)
+   修改指定的CartItem的数量和总价，根据传入的id和count
+   1. items.get(id);
+   2. if(null != item){}
+      先更新数量，再更新总价
+      1. item.setCount(count);
+      2. item.setTotalPrice(item.getPrice().multiply(new BigDecimal(item.getCount())));
+      3. =为什么要使用item.getCount()而不是参数count=
+	 因为setCount可能有一个校验的过程，set进去的值可能和真实的数量可能不一样
+2. CartServlet.updateCount方法
+   1. Cart cart = (Cart) req.getSession().getAttribute("cart");
+   2. if (null != cart) {cart.updateCount(id, count);}
+   3. resp.sendRedirect(req.getHeader("Referer"));
+3. 整合前端并联调
+   +-本身就可以响应，所以只要找到+的动作在哪触发的，在+的地方发出http请求
+** 生成订单
+1. order表
+   =每个字段使用not null来约束=
+   =字段类型的设计，应当和相关表的字段保持一致=
+   1. id varchar(64)
+   2. create_time datetime not null
+   3. price decimal(11.2) not null
+   4. status tinyint not null
+   5. member_id int not null
+      该订单对应的会员id
+2. order_item表
+   1. int primary key auto_increment
+   2. name varchar(64) not null
+   3. price decimal not null
+   4. countt int not null
+   5. total_price decimal(11.2) not null
+   6. order_id varchar(64) not null
+      对应的订单号
+*** service层
+1. String saveOrder(Cart cart, int memberId)
+   返回订单号
+   1. 通过cart对象，构建order对象
+      1. 使用时间戳+memberId当作id
+   2. 通过cart对象，遍历出CartItem，构建OrderItem对象，并且存到对应的表order_item
+   3. 更新furn表的sales销量，stock存量
+      1. 遍历拿到家居id，通过id获取到furn对象
+      2. furn.getSales() + item.getCount()
+	 item是购物车中 的家居
+      3. furn.getStock() - item.getCount()
+      4. furnDAO.updateFurn(furn);
+   4. 清空购物车
+      cart.cleer();
+*** servlet层
+1. cart是从session获得的
+2. 当用户将家居添加进购物车后清空了购物车，此时在session里cart对象存在，所有除了判断if(null == cart){转发}之外
+   =if(null == cart || cart.getItems() == null)这样写对吗=
+   这样写是错的，因为当调用map的clear()时，并没有将map置空，而是让size==0
+   if(null == cart || cart.getItems().size() == 0
