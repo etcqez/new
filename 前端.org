@@ -1,4 +1,19 @@
 * js
+** js特殊值
+1. undefined
+   变量未初始化, 默认undefined
+2. null
+3. NaN
+   非数值，3 * "abc"
+** 定义对象
+1. var 对象名 = new Object();
+2. var 对象名 = {属性名: 值,};
+** 表单提交事件
+1. 静态注册(onsubmit中必须包含 =return= )
+   <form action="ok.html" onsubmit="return register()">
+2. 动态注册
+   form2.onsubmit = function(){return false;}
+** js细节
 1. js没有重载，当你定义同名函数多次时，后面的定义会覆盖前面的定义，而不是像传统面向对象语言那样创建重载版本。
    因为JavaScript 是动态类型语言，函数的参数没有严格的类型声明
 2. js的隐形参数argments
@@ -42,3 +57,455 @@
    childNodes获取的是object text 和 object htmloptionelement，如果不希望得到text对象，需要将所有的内容放在一行
 7. 获取第一个子节点 firstChild
    是按照childNodes得到的第一个子节点，可能为 object text
+** es6新特性
+1. let和var的敬贺
+   1. 局部定义的只能局部使用
+   2. 只能声明一次
+   3. 不存在变量提升
+* JQuery
+** jquery快速入门
+1. $(function(){})
+   onload
+2. var $btn01 = $("#btn01")
+   1. 得到btn01是jquery对象，是对dom对象的包装
+   2. jquery对象是数组对象
+   3. 规定：jquery对象的命名以$开头
+3. $btn01.click(function(){})
+   绑定事件
+** jquery数组对象方法
+- click(函数)
+- text() 取出标签中的文本
+** dom对象和jquery对象相互转换
+- dom -> jquery
+  $(dom对象)
+- jquery -> dom
+  1. jquery对象[0]
+  2. jquery对象.get(0)
+** jquery选择器
+- 优点
+  1. dom对象如果为空，调用方法或属性会报错，jquery对象不会报错，会提示 undefined
+     js则需要这样写 if(username){}
+     在js中如果对象不为空就是真
+*** jquery选择器
+- jquery层级选择器
+  1. + 当前元素的后面一个元素
+  2. ~ 当前元素的后面所有元素
+  3. $("选择器").siblings("选择器") 当前元素的所有兄弟元素
+- 基础过滤选择器
+  :first 类似eq(0) :last :not(选择器) :even :odd :gt(数字) :lt() :header 所有标题元素
+- 内容过滤选择器
+  - :contains(字符串)
+    包含某个字符串文本的元素
+  - :empty
+    不包含子元素和文本的元素
+  - :has(选择器)
+    包含选择器的元素
+    - 容易混淆的点
+      $("div:has('.mini')") 和 $("div.mini")
+      - 前者：选择class="mini"的元素的div父元素，即div的父元素，含有子元素class="mini"
+      - 后者：选择class-"mini"的div，即某个元素又是div又含有mini
+  - :parent
+    含有子元素或文本的元素，和empty相反
+  - :not(内容过滤选择器)
+    取反
+- 可见度过滤选择器
+  可见度过滤选择器是根据元素的可见和不可见状态来选择相应的元素
+  - :hidden
+  - :visible
+- 属性过滤选择器
+  - [属性]
+  - [属性=值]
+  - [属性!=值]
+    包包含没有这个属性的
+  - [属性^=值]
+    匹配给定的属性是以某些值开头的元素
+  - [属性$=值]
+  - [属性*=值]
+    匹配给定的属性是以包含某些值的元素
+- 子元素过滤选择器
+  - :nth-child
+  - :first-child
+  - :last-child
+  - :only-child
+- 表单属性过滤选择器
+  - :enable
+  - :disable
+  - :checked
+  - :selected
+- 表单选择器
+  - :input
+    匹配所有input, textarea, select, button元素
+  - :text :password :radio ;checkbox :submit :image :file
+  - :button 会选择 <input type="button"> 的 <button>
+  - :reset 匹配所有重置按钮
+** 遍历
+1. for
+   遍历出来的是dom对象
+2. jquery对象.each(函数)
+   函数里面的this就是遍历出来的dom对象
+   ${this}: 将this转换成jqery对象
+** dom
+- 修改属性
+  attr("属性名","属性值")
+- 创建节点
+  $("<li id=\"cq\" name=\"chongqing\">重庆</li>")
+- 插入节点
+  - 内部插入法
+    - A.append(B)
+      表示把B对象插入到A对象内部的结尾处
+      结果是：B对象成为A对象的子元素
+    - A.appendTo(B)
+      表示把A对象插入到B对象内部的结尾处
+      和append相反
+    - prepend prependTo
+  - 外部插入法
+    - A.after(B)
+      表示B对象插入到A对象后面
+      结果是：B对象成为A对象的兄弟节点
+    - before
+    - A.insertAfter(B)
+      表示A对象插入到B对象后面
+      和after相反
+    - insertBefore
+  - 如果要添加的jquery对象在dom存在，则移动
+- 删除节点
+  - remove()
+    谁调用的删谁，返回被删除的元素
+  - empty()
+    和remove基本一样，但是只会删除里面的内容，而不会删除标签，会比使用remove多出一些换行(比如：删除p元素)
+- 复制节点
+  - clone()
+    返回克隆后的副本
+  - clone(true)
+    复制元素的同时也复制元素中的事件
+- 替换节点
+  - A.replaceWith(B)
+    用A替换B
+  - replaceAll()
+    和replaceWith相反
+  - 参数可以是jquery对象，或html标签
+    - 示例：$("p").replaceWith("<a href=http://www.baidu.com>点击到百度</a>")
+      将p替换成超链接
+    - 如果新的jquery对象有事件，替换后会保留
+- 样式操作
+  - 获取class和设置class
+    attr()
+  - 追加样式
+    addClass()
+  - 移除样式
+    removeClass() 不指定类名删除所有
+  - 切换样式
+    toggleClass() 如果类名存在则删除它，如果类名不存在则添加它
+  - 判断是否含有某个样式
+    hasClass()
+- 获取html文本和值
+  html() text() val()
+  - 案例
+    - 在没有登陆之前提示默认信息：用户邮箱/手机号/用户名 当用户把光标定位到输入框，提示信息就消失
+      这时就有两种可能性：1. 如果用户输入了，保留输入的内容 2. 如果没有输入，就恢复默认信息
+      小知识点：defaultValue 表单元素的默认值属性
+      1. focus(获取焦点)
+	 如果当前值==this.defaultValue 就清空
+      2. blur(失去焦点)
+	 如果为空就恢复默认值
+- css
+  - css() 获取和设置元素的样式属性
+  - opacity属性 获取和设置元素的透明度
+  - height(), width()
+    获取和设置元素的高度，若只传递数字，则默认单位是px，如需要使用其它单位则需要传递一个字符串
+  - offset()
+    获取元素在当前视窗中的相对位移，其返回对象包含了两个属性：top, left。该方法只对可见元素有效
+** 常用遍历节点的方法
+1. children()
+   取得所有子元素的集合
+2. next()
+   取得后面的一个同辈元素
+3. nextAll()
+   取得后面所有的同辈元素
+4. prev()/prevAll()
+5. siblings()
+   取得前后所有同辈元素
+6. eq(索引)
+   获取指定的第几个元素
+7. filter(标签)
+   只获取指定标签和元素
+** 页面加载完毕后触发方法
+1. window.onload = 函数
+2. $(函数)
+3. $(document).ready(函数)
+** 多选下拉框多选和复选框复选
+1. val([值, 值])
+2. 如果是复选框，那么值也是value
+** 选择复选框
+prop("checked", true)
+1. 如果没有checked 就添加，并且设置true, 表示选中
+2. 如果有，设置为true, 表示选中
+3. 简単的讲就是prop("checked", true)就将选中的对象的状态设置为选中
+*** 总结：选择复选框有两种方式
+1. 通过val()修改
+2. 通过prop()修改
+* JSON
+- 介绍
+  1. JSON指的是JavaScript对象表示法(JavaScript Object Notation)
+  2. JSON是轻量级和文本数据交换格式
+  3. JSON独立于语言
+  4. JSON具有这自我描述性，更易理解
+** JSON 转字符串
+- JSON.stringify(JSON对象) JSON.parse(JSON客串)
+- 注意事项和细节
+  1. JSON.stringify(json对象)会返回对应string,并不会影响原来json对象
+  2. JSON.parse(string)函数会返回对应的json对象,并不会影响原来string
+  3. 在定义Json对象时，可以使用''表示字符串，前面的key可以不用引号
+  4. 但是在把原生字符串转成json对象时，必须使用" ", 否则会报错
+  5. JSON.stringify(json对象)返回的字符串，都是""表示的字符串，所以在语法格式正确的情况下，是可以重新转成json对象的
+** JSON在java中使用
+  1. java 中使用json，需要引入到第3方的包gson.jar
+  2. Gson 是 Google 提供的用来在 Java 对象和 JSON 数据之间进行映射的 Java类库。
+  3. 可以对JSON字符串和Java对象相互转换
+*** Java对象和JSON字符串互转
+1. 在项目目录下新建一个lib目录
+2. 将gson.json放入并Add as Library
+3. new Gson()
+4. toJson(java对象)
+5. fromJson(json字符串,类.class)
+*** List对象和JSON互转
+- toJson(集合对象)
+- JSON -> List
+  1. Type type = new TypeToken<List<Book>>() {}.getType();
+     1. type是List和Book的全路径
+     2. type是一个匿名内部类(子类)
+     3. 匿名内部类相当于子类
+     4. 而且这个匿名内部类是有自己的无参构造器，当执行子类的无参构造器时，默认super()
+  2. fromJson(json字符串, type)
+*** Map对象和JSON字符串互转
+- toJson(map对象)
+- gson.fromJson(strBookMap, new TypeToken<Map<string,Book>>().getType()
+* AJAX
+1. Asynchronous Javascript And XML
+2. AJAX是一种浏览器异步发起请求，局部更新页面的技术
+3. AJAX请求：AJAX引擎发出的http请求
+** AJAX经典应用场景
+1. 搜索引擎根据用户输入关键字， 自动提示检索关键字
+2. 动态加载数据，按需取得数据【树形菜单、联动菜单..】
+3. 改善用户体验。【输入内容前提示、带进度条文件上传..】
+4. 电子商务应用。【购物车、邮件订阅，】
+5. 访问第三方服务。【访问搜索服务、ss阅读器】
+6. 页面局部刷新
+** AJAX快速入门
+1. var xhr = new XMLHttpRequest();
+2. xhr.open("GET","/ajax/checkUserServlet?username=" + uname, true);
+3. xhr.onreadystatechange = function () { if(xhr.readyState == 4 && xhr.status == 200){} }
+4. xhr.send()
+*** 案例：输入用户名后点击按钮，显示用户名是否可用
+1. 浏览器发送ajax请求
+   1. 给按钮绑定点击事件
+   2. var xhr = new XMLHttpRequest();
+   3. xhr.open("GET","/ajax/checkUserServlet?username=" + uname, true);
+      true: 表示异步
+   4. xhr.send();
+      发送，因为是GET请求，不用携带数据
+2. 服务器回复ajax请求
+   假定用户名为king，就不可用
+   1. 如果用户名是king就返回king对象，否则返回空
+   2. 创建用户(以后是从DB获取)，并转成JSON
+   3. 返回JSON
+3. 浏览器接收
+   1. 在send函数调用前，给XMLHttpRequest 绑定一个事件onreadystatechange，该事件表示，可以去指定一个函数，当数据变化，会触发onreadystatechange，每当 xhr对象readyState 改变时，就会触发 onreadystatechange事件
+   2. if(xhr.readyState == 4 && xhr.status == 200) {
+      如架请求己完成，且响应已就绪，并且状态码是200
+   3. var responseText = xhr.responseText;
+      拿到JSON字符串
+   4. 判断 responseText 是否为空
+   5. 不为空就说明用户存在，用户名不可用
+*** 数据库版
+1. 创建 user 表
+2. 工具类：JDBCUtilsByDruid
+   jar包：commons-dbutils.jar druid.jar mysql-connector-java.jar
+   配置文件：druid.properties
+   DAO：BasicDAO
+3. UserService的getUserByName(String username)中：
+   userDAO.querySingle("select * from `user'where username=?", User.class, username)
+4. servlet调用getUserByName，判断结果是否为空，为空就返回空串，否则为对象的json字符串
+5. 注意：因为 javaweb 方式启动，加载 druid.properties 需要使用类加载器
+   properties.load(JDBCUtilsByDruid.class.getClassLoader() .getResourceAsStream("druid.properties"));
+6. 注意：bean 必须提供一个无参构造器
+   因为用到了 User.class，一定用到了反射
+* JQuery操作Ajax
+** JQuery操作Ajax版
+1. 前端
+   #+begin_src js
+     $.ajax({
+         url: "/ajax/checkUserServlet2",
+         type:"POST",
+         data:{//这里我们直接给json，为啥我要传日期，为了浏览器缓存
+     	username: $("#uname").val(),
+     	date: new Date()
+         },
+         error:function (){//失败后的回调函数
+     	consoe.Log("失败~")
+     	I
+         }
+         // 成功后调用
+         success: function (data, status, xhr){
+     	console.log("成功")
+         }
+         dataType: "json" // 要求服务器返回的数据格式
+     })
+   #+end_src
+2. 服务器端
+   1. response.setContentType("text/json;charset=utf-8");
+   2. if ("king".equals(username))
+      创建 king 对象并转成 json
+   3. 否则返回一个不存在的 user
+      new User(-1, "", "", "")
+3. 注意：
+   1. 返回的 data 是 json 对象，无法直接打印，需要调用
+      $("#div1").html(JSON.strlnqify(data));
+   2. 服务器必须设置：
+      response.setContentType("text/json;charset=utf-8");
+** get
+#+begin_src js
+  $.get(
+      "/ajax/checkUserServlet2",
+      {
+      	username: $("#uname").val(),
+      	date: new Date()
+      },
+      function (data, status, xhr) {
+  	console.Log("成功");
+  	console.log("data=", data);
+  	console.log("status=", status); console.log("xhr=", xhr);
+  	//data是json对象->显示转成json的字符串
+  	$("#div1").html(Js0N.stringify(data));
+  	//对返回的结果进行处理
+  	if ("" == data.username) {
+  	    $("#myres").val("该用户名可用");
+  	}else {
+  	    $("#myres").val("该用户名不可用");
+  	}
+      },
+      "json"
+  )
+#+end_src
+** getJSON
+如果你通过jquery发出的ajax请求是get 并且 返回的数据格式是json，可以使用
+#+begin_src js
+  $.getJSON(
+      "/ajax/checkUserServlet2",
+      {
+      	username: $("#uname").val(),
+      	date: new Date()
+      },
+      function (data, status, xhr) {
+  	console.Log("成功");
+  	console.log("data=", data);
+  	console.log("status=", status); console.log("xhr=", xhr);
+  	//data是json对象->显示转成json的字符串
+  	$("#div1").html(Js0N.stringify(data));
+  	//对返回的结果进行处理
+  	if ("" == data.username) {
+  	    $("#myres").val("该用户名可用");
+  	}else {
+  	    $("#myres").val("该用户名不可用");
+  	}
+      }
+  )
+
+#+end_src
+* ThreadLocal
+** 什么是 ThreadLocal
+1. ThreadLocal的作用，可以实现在同一个线程数据共享，,从而解决多线程数据安全问题.
+2. ThreadLocal可以给当前线程关联一个数据(普通变量、对象、数组)set方法
+3. ThreadLocal可以像 Map一样存取数据，key 为当前线程
+4. =每一个ThreadLocal对象，只能为当前线程关联一个数据= 如果要为当前线程关联多个数据，就需要使用多个ThreadLocal 对象实例
+5. =每个ThreadLocal对象实例定义的时候，一般为 static类型=
+6. ThreadLocal中保存数据，在线程销毁后，会自动释放
+** 快速入门
+1. ThreadLocalMap 是 ThreadLocal 的内部类
+   ThreadLocalMap 有内部类 Entry
+2. public static ThreadLocal<Object> threadLocal1 = new ThreadLocal<>();
+3. threadLocal1.set(dog);
+4. 0bject o = T1.threadLocal1.get();
+   不用指定 key 因为只能放一个对象
+** 源码解析
+1. 为什么 get set 关联了线程，如何关联线程的
+   1. set 获取了当前线程
+   2. 通过线程对象，获取 ThreadLocalMap
+      ThreadLocalMap 有很多的 ThreadLocal
+   3. 如果map不为空，将对象放入map
+      1. map.set(this, value)
+	 1. this: ThreadLocal对象
+	 2. value: 存放的对象
+	 3. 所以一个 ThreadLocal 只能放一个值
+   4. 如果map 为null，就创建一个和当前线程关联的ThreadLocalMap，并且将该数据放入
+2. 通过线程，拿到 Map
+3. Map 存在 就把对象扔到map，key为当前的 ThreadLocal
+* 文件上传下载
+** 文件上传原理
+1. 前端
+   1. 还是使用表单提交
+   2. action还是按照以前规定来指定
+   3. method指定为post
+   4. enctype: encodetype 编码类型 默认是application/x-www-form-urlencoded 即url编码 这种编码不适二进制文件数据的提交，一般是适用文本
+   5. 如果是要进行二进制文件的提交enctype 要指定 multipart/form-data 表示表单提交的数据是有多个部分组成，也就是可以提交二进制数据和文本数据
+2. 后端
+   1. 判断是不是一个文件表单(二进制数据)
+   2. 判断表单提交的各个表单项是什么类型
+   3. 如果是一个普通的表单项，就按照文本的方式来处理
+   4. 如果是一个文件表单项(二进制数据)，使用I0技术进行处理
+   5. 把表单提交的文件数据，保存到指定的服务端的某个目录
+** 文件上传流程
+1. 引入jar包
+   commons-fileupload-1.2.1jar commons-io-1.4.jar jasper.jar jsp-api.jar servet-api.jar taglibs-standrd-impl-1.2.1jar taglibs-standard-spec-1.2.1.jar
+2. 判断是不是文件表单
+   if(ServletFileUpload.isMultipartContent(request))
+3. 创建对象 用于构建一个 =解析= 上传数据的工具对象
+   DiskFileItemFactory diskFileItemFactory = new DiskFileltemFactory();
+4. 创建一个解析上传数据的工具对象
+   ServletFileUpload servletFileUpload = new ServletFileUpload(diskFileltemFactory);
+5. 关键的地方，servletFileUpload对象可以把表単提交的数据text/文件将其封装到FileItem文件项中
+   List<FileItem> list - servletFileUpload.parseRequest(request);
+6. 遍历，调用 fileItem.isFormField()
+   如果是true就是文本
+7. 如果是文件，进入else分支
+   1. 获取文件名
+      fileItem.getName()
+   2. 服务器保存文件的位置应处于out目录下。获得项目布署后的绝对路径
+      request.getServletContext() .getRealPath(filePath);
+   3. 创建此目录，并将临时文件拷贝到这个目录
+      fileItem.write(new File(fileRealPathDirectory + “/” + 文件名));
+8. 解决文件名乱码
+   servletFileUpload.setCharacterEncoding("utf-8");
+*** 分目录存放
+1. 使用日期三代类获取当前时间
+   LocalDateTime ldt = LocalDateTime.now();
+2. 拼接一个 年/月/日 字符串
+3. 新建目录
+   new File(fileRealPath + WebUtils.getYearMonthDay)
+*** 如果用户上传的文件名重复，服务器端会覆盖文件，如何阻止
+1. 用 UUID + 文件名 存入磁盘
+*** 文件上传注意事项和细节
+1. 如果将文件都上传到一个目录下，当上传文件很多时，会造成访问文件速度变慢，因此可以将文件上传到不同目录比如一天上传的文件，统一放到一个文件夹年月日,比如21001010 文件夹
+2. 一个完美的文件上传，要考虑的因素很多，比如断点续传、控制图片大小，尺寸，分片上传，防止恶意上传等，在项目中，可以考虑使用WebUploader 组件(百度开发)
+3. 文件上传功能，在项目中建议有限制的使用，一般用在头像、证明、合同、产品展示等，如果不加限制，会造成服务器空间被大量占用[比如b站评论，就不能传图片，微信发1次朋友圈最多9张图等..]
+4. 文件上传，创建web/upload 的文件夹，在tomcat 启动时，没有在out目录下创建对应的upload文件夹,原因是tomcat对应空目录是不会在out下创建相应目录的，所以，只需在upload 目录下，放一个文件即可，这个是Idea + Tomcat的问题,实际开发不会存在。
+** 文件下载原理
+响应头
+1. Content-Disposition: 表示下载的数据的展示方式，比如是内联形式(网页形式或者网页一部分)，或者是文件下载方式
+2. 准备要下载的文件，放入web目录
+3. =保证当我们的tomcat启动后，在工作目录out下有对应文件=
+4. =如果没有看到创建的文件在ouy工件目录out下 rebuild project -> restart=
+5. 获取文件名
+6. servletContext.getMimeType(/download/1.jpg) 获取web工程目录下/download/1.jpg 文件
+7. 给http响应，设置响应头 Content-Disposition
+   ff是文件名中文需要base64，而ie/chrome是 URL编码
+8. 读取下载文件数据，返回给客户端/浏览器
+   1. 创建一个和下载文件关联的输入流
+      InputStream resourceAsStream = servletContext.getResourceAsStream(downLoadFileFullPath);
+   2. 得到返回数据
+      Servlet0utputstream outputStream = response.get0utputstream();
+   3. 使用工具类，将输入流关联的文件，对拷到输出流，并返回给客户端/浏览器
+      IOUtils,copy(resourceAsStream, outputstream);
+** 文件下载注意事项和细节
+1. 文件下载，比较麻烦的就是文件名中文处理，且firefox和chrome处理方式不同
+4. 对于不同的浏览器,在把文件下载完毕后，处理的方式不一样，有些是直接打开文件,有些是将文件下载到本地/下载目录

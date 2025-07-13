@@ -39,6 +39,7 @@ MyPanel extends JPanel implements KeyListener
 3. 直正实现多线程的效果，是start0()，而不是run
 ** 为什么调用start()能把Runnable接口对象的run()调用
 1. 底层使用了代理模式
+2. 在 Runnable 接口中的 start() 调用了 run()
 ** 继承Thread vs 实现Runnable的区别
 1. 没有本质区别，Thread类本身就实现了Runnable接口
 2. 实现Runnable接口方式更加适合多个线程共享一个资源的情况，并且避免了单继承的限制，建议使用Runnable

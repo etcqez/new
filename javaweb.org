@@ -9,6 +9,19 @@
 输入正确密码才能登录，进入管理页面，否则不能进入管理界面
 1. 在Servlet判断密码是否正确，正确转发到管理界面，否则转发到错误界面
 2. 登录成功后在sesssion中保存登录用户，在管理界面验证
+** 计算器 (jsp)
+要求在检查提交的数据
+1. form标签中，onsubmit="return check()"，可以在表单被提交时执行
+2. 第一个jsp页面，用于提交数据，jsp的作用在于动态获取上下文路径
+3. Servlet接收数据， =后端接收到的参数是表单中的name=
+4. 将结果保存到域对象，并转发到下一个jsp页面
+** 显示妖怪 (jsp+servlet+jstl+el)
+点击超链接，可以显示所有的妖怪信息
+要求显示的数据在Servlet准备
+1. 第一个jsp有一个a标签，查询所有的妖怪
+2. 编写一个servlet接收请求，创建妖怪集合并放入request域，转发到第二个jsp页面
+3. 第二个jsp页面用来显示所有的妖怪
+4. 在第二页面使用c:forEach遍历集合生成tr td
 * tomcat
 - 浏览器请求资源
   1. 浏览器先解析出主机名
@@ -124,7 +137,7 @@ servlet一套规范，里面定义了大量接口，而tomcat实现了这些接�
 - 配置信息位置(web.xml中的Servlet)：servlet>init-param>param-name param-value
 ** ServletConfig创建流程
 1. 当DBServlet对象初始化时，tomcat会同时创建一个Servletconfig对家
-2. 这时如果DBServlet init() 方法中你调用 super.init(config);
+2. 这时如果DBServlet中init() 方法中你调用 super.init(config);
 3. 这时就会把 Tomcat创建的 Servletconfig对象赋给 Genericservlet的属性config
 4. 因此如果你重写init()方法，记住如果你想在其它方法通过 getServletConfig()方法获取ServletConfig，则一定要记住 调用super.init(config);
 * ServletContext
@@ -343,6 +356,8 @@ EL 表达式是为了替换 jsp 中的表达式脚本，JSTL是为了替换代�
   1. filter一般写在其它servlet的前面
   2. 配置和servlet非常相似，也是由tomcat维护
   3. url-pattern 就是当请求的url匹配的时候，就会调用该filter
+  4. 登录成功后的请求转发是不会经过过滤器的，而之后请求的图片需要重新给服务器发送请求，所以要经过过滤器
+  5. 在一次请求里面，过滤器拿到的request和目标资源拿到的request对象是同一个
 - 过滤器的使用步骤
   1. 实现 Filter
   2. 需要实现的方法
@@ -352,6 +367,17 @@ EL 表达式是为了替换 jsp 中的表达式脚本，JSTL是为了替换代�
 	当每次调用该filter时，doFilter就会被调用
      3. destroy
 	当filter被销毁时，会调用该方法
+- FilterConfig接口
+  getFilterName getServletContext getInitParameter getInitParameterNames
+- 应用实例
+  - 拦截一个网段
+    1. 在web.xml init-param 配置网段
+    2. 在过滤器定义一个成员变量ip
+    3. 在init()中，通过filterConfig.getInitParameter("ip")获取ip，赋值给ip
+    4. 在doFilter中获取客户端ip，如果包含要拦截的ip，则跳转到登录界面并return
+    5. 过滤器配置中的参数只能通过 filterConfig获取
+- 过滤器链
+  如果一个请求匹配多个过滤器，会形成过滤器链，执行顺序和web.xml配置顺序一致
 * 实现Tomcat底层机制+自已设计Servlet
 ** 整体架构分析
 1. 客户端发送HTTP请求

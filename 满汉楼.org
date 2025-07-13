@@ -1,0 +1,25 @@
+* 登录
+1. 在 MHLView 编写 一级菜单(登录) 二级菜单(点餐)
+2. 创建employee 表，在 domain 新建 Employee extends BasicDAO<Employee>
+3. 创建 EmployeeService, 编写 getEmployeeByIdAndPwd(String empId, String pwd) 在 employee 表根据两者查询
+4. MHLView 调用 EmployeeService, 判断 employee 对象是否为空
+* 显示餐桌状态
+1. 创建 diningTable 表、bean、DAO，service
+2. 在 DiningTableService 定义 list()
+   diningTableDAO.queryMulti("select id, state from diningTable" DiningTable.cLass)
+* 订座
+1. 在 DiningTableService 编写
+   1. DiningTable getDiningTableBi(int id)
+   2. boolean orderDiningTable(int id, String orderName, String orderTel)
+      diningTableDAo.update("update diningTable set state='已经预定',orderName=?, orderTel=? where id=?", orderName, orderTel, id)
+2. 在 MHLView调用, 判断是否为空，提示预订餐桌不存在，判断 DiningTable 的状态是否为空，提示该餐桌已经预定或就餐中
+* 菜单
+1. 创建 menu 表, Menu。DAO，Service
+2. 在 service 调用 dao 的 list 方法
+* 点餐
+- 思路分拣
+  1. 餐桌号，菜品编号 检验
+  2. 点餐成功，需要修改 餐桌状态
+  3. 生成帐单
+- 实现
+  1. 创建 bill 表(id, billId, menuId, nums, billDate, money, state, diningTableId)
