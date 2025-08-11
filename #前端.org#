@@ -651,4 +651,4 @@ prop("checked", true)
 9. 脚手架
    1. template: '<App/>' 的App 来自 components: { App }
    2. components: { App } 是 components: { App: App } 的简写
-   3. import router from './router' 代表把目录下的所有文件都引入 实际import router from './router/index.js'
+   3. import routter from './router' 是 import routter from './router/.index.js' 的
