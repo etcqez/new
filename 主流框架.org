@@ -221,4 +221,389 @@
 ** xml文件位置
    1. 如果我们是普通的java项目，beans.xmt放在src下
    2. 如果我们是java maven 项目，beans.xml 放在 src/main/resources
-** spring怎么实现一个注解就能决定是单例，还是多例的，底层是如何实现的
+** spring怎么实现一个注解 @Scope(value="prototype") 就能决定是单例，还是多例的，底层是如何实现的
+** 加入 @Autowired Spring容器是如何实现依赖注入
+** Spring 底层实现,如何实现Bean后置处理器机制
+** 步骤
+1. 配置类 -> ComponentScan注解 -> 扫描包
+2. 完整的扫描包路径 = 项目路径 + 扫描包
+3. 遍历文件 -> 过滤出class文件并提取类名与扫描包拼接 -> 创建class对象，并判断其注解是否包含 Component
+* Spring底层
+** 知识扩展：类加载器
+1. Bootstrap类加载器
+   对应路径jre/lib
+2. Ext类加载器
+   对应路径jre/lib/ext
+3. App类加载器
+   对应路径classpath
+4. classpath类路径，就是java.exe执行时，通过-classpath 指定的路径
+** 注意事项
+1. maven项目beans.xml必须在resource
+   因为项目目录是在target中
+2. Spring的后置处理器中，如果想要修改bean，就返回修改后的bean
+   =如果返回null并将bean没有置空，而是不改变bean=
+3. 后置处理器在bean的初始化方法执行前后执行，bean的初始化方法名字任意，是在beans.xml中指定的，或者通过 @PostConstruct来指定
+4. 如果没有初始化方法，后置处理器也会被调用
+5. 后置处理器的配置
+   1. xml 配置
+   2. 注解配置：@component + 扫描包
+6. aop的配置：扫描包 + 切面自动代理
+** 任务1 编写自己Spring容器，实现扫描包，得到bean的class对象
+*** 建立文件
+1. component包建立注解类 Component ComponentScan
+2. ioc包建立类 SpringConfig.java 替代bean.xml
+3. ioc包建立类 SpringApplicationContext,java 作用类似于Spring原生ioc容器
+   属性：Class configClass
+*** 得到扫描包：@ComponentScan的值
+#+begin_src java
+  ComponentScan componentScan = (ComponentScan) this.configClass.getDeclaredAnnotation(ComponentScan.class);
+  String path = componentScan.value();
+#+end_src
+*** 得到类加载器
+#+begin_src java
+  ClassLoader classLoader = SpringApplicationContext.class.getClassLoader();
+#+end_src
+*** 得到扫描包的完整路径
+#+begin_src java
+  path = path.replace(".", "/");
+  URL resource = classLoader.getResource(path);
+#+end_src
+*** 遍历这个路径
+#+begin_src java
+  File file = new File( resource.getFile());
+  if (file.isDirectory()){
+      File[] files = file.listFiles();
+      for (File f : files){}
+  }
+#+end_src
+*** 只处理这个路径下的.class文件
+#+begin_src java
+  String fileAbsolutePath = f.getAbsoluttePath();
+  if (fileAbsolutePath.endWith(".class")){
+      
+  }
+#+end_src
+*** 获取到类名
+#+begin_src java
+  String className = fileAbsolutePath.subString(fileAbsolutePath.lastIndexOf("\\") + 1, fileAbsolutePath.indexOf(".class"));
+#+end_src
+*** 获取到全类名
+#+begin_src java
+  String ClassFullname = path.replace("/", ".") + "." + className;
+#+end_src
+*** 根据全类名，创建classs对象
+#+begin_src java
+  Class<?> clazz = classLoader.loadClass(classFullName);
+#+end_src
+*** 判断注解是否有 @Compon
+#+begin_src java
+  if (clazz.isAnnotionPresent(Component.class)){}
+#+end_src
+** 任务2 将bean信息封装到 BeanDefinition对象，并放入到BeanDefinitionMap
+包含单例对象集合和bean定义集合
+1. annotation包增加注解 Scope
+2. ioc包增加类 BeanDefinition
+   - 包含的属性
+     1. String scope
+     2. Class clazz
+	Bean对应的Class对象，为了反射可以生成对应的对象
+3. SpringApplicationContext类增加属性
+   1. ConcurrentHashMap<String, BeanDefinition> beanDefinitionMap
+   2. ConcurrentHashMap<String, Object> singletonObjects
+** 任务3 初始化bean单例池。并完成getBean方法，createBean方法
+1. 独立的 createBean(BeanDefinition beanDefinition)方法 根据beanDefinition创建实例 跟是否在初始化单例池创建 是否在多实例时动态创建无关
+   #+begin_src java
+     Class clazz = beanDefinition.getClass();
+     Object instance = clazz.getDeclaredConstructor().newInstance();
+     return instance;
+     // 失败返回空
+     return null;
+   #+end_src
+2. getBean(String name)方法，对应spring的getBean()，使用反射得到实例
+   #+begin_src java
+     // 可以加一个判断，判断传入的beanName是否在beanDefinitionMap中存在
+     if(beanDefinitionMap.containsKey(name)){
+         BeanDefinition beanDefinition = beanDefinitionMap.get(name);
+         if("singleton".equalsIgnoreCase(beanDefinition.getScope())){
+     	return singletonObjects.get(name);
+         } else{
+     	return createBean(beanDefinition);
+         }
+     } else{
+         // 抛出一个空指针异常
+         throw new NullPointerException("没有该bean")
+     }
+   #+end_src
+** 实现依赖注入，@Autowited是如何生效的
+* SpringMVC
+是WEB层框架，接管了Web层组件，比如控制器，视图，视图解析，不需要实现Servlet
+** web.xml
+tomcat的配置文件
+#+begin_src xml
+  <servlet>
+    <servlet-name>springDispatcherServlet</servlet-name>
+    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+    <!--配置属性 contextConfigLocation，指定DispatcherServlet 去操作的spring配置文件-->
+    <init-param>
+      <param-name>contextConfigLocation</param-name>
+      <param-value>classpath:applicationContext-mvc.xml</param-value>
+    </init-param>
+    <!--在web项目启动时，就自动的加载DispatcherServlet-->
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+#+end_src
+== 如果不指定spring容器配置文件，默认会从寻找/WEB-INF/springDispatcherServlet-servlet.xml，也就是 servlet-name-servlet==
+* SpringMVC
+** 快速入门
+*** 配置中央控制器/前端控制器/分发控制器
+web.xml
+#+begin_src xml
+  <servlet>
+    <servlet-name>springDispatcherServlet</servlet-name>
+    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+    <!--配置属性 contextConfigLocation，指定DispatcherServlet 去操作的spring配置文件-->
+    <init-param>
+      <param-name>contextConfigLocation</param-name>
+      <param-value>classpath:applicationContext-mvc.xml</param-value>
+    </init-param>
+    <!--在web项目启动时，就自动的加载DispatcherServlet-->
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>springDispatcherServlet</servlet-name>
+    <url-pattern>/</url-pattern>
+  </servlet-mapping>
+#+end_src
+Spring的配置文件
+#+begin_src xml
+  <context:component-scan base-package=""/>
+  <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+    <property name="prefix" value="/WEB-INF/pages/"/>
+    <property name="suffix" value=".jsp"/>
+  </bean>
+#+end_src
+- 注意事项
+  1. contextConfigLocation 如果没有指定，默认按照 springDispatcherServlet-servlet
+** SpringMVC执行流程分析
+1. 浏览器发出请求，到达前端控制器 DispatcherServlet
+2. 调用处理器映射器  HandlerMapping，返回处理器执行链 HandlerExecutionChain
+   包含拦截器 HandlerInterceptor 和 自己写的 Handler/Controller
+3. 调用处理器适配器 HandlerAdapter，调用Handler，返回 ModelAndView
+4. 调用视图解析器 ViewResovler，返回View
+5. 视图渲染，将Model中的数据填充到View
+6. 返回响应
+** 相关注解
+*** RequestMapping 作用在类上或方法上
+1. RequestMapping(value = "/buy", method = RequestMethod.POST)
+   method 默认支持 GET 和 POST
+2. RequestMapping(params = "bookId")
+   必须给bookId参数
+   1. params支持简单的表达式
+      1. !=param1
+	 表示不能包含名为的参数
+      2. param1 != value1
+	 表示请求必须包含但值不为
+      3. {"param1=value1", "param2"}
+	 表示请求必须包含两个参数
+3. 支持Ant风格资源地址
+   1. ？匹配文件名中的一个字符
+   2. * 匹配文件名中的任意字符
+   3. ** 匹配多层路径
+4. @RequestMapping(value = "/reg/{username}/{userid}")
+   如何匹配方法的参数 @PathVariable("username") String name
+5. RequestMapping 注意事项
+   1. 映射的URL，不能重复
+      @RequestMapping(value = "/hi") 即 /hi 路径不能有两个
+   2. 简写形式 @PostMapping @GetMapping
+   3. 表单请求的参数名要和目标方法的参数名保持一致
+      网址参数名 ?email=xxx 和 方法的参数名 String email 一致 
+*** RequestParam 作用在方法的参数上
+获取参数值
+1. @RequestMapping(value="name", required=fanse)
+   1. @RequestParam表示会接收提交的参数
+   2. value="name" 表示提交的参数名是name
+   3. required=false 表示该参数可以没有，默认是true，表示必领有这个参数
+** REST
+*** 说明
+1. 即 Representational State Transfer 表现层状态转化
+2. GET 用来获取资源 POST 用来新建资源 PUT 用来更新资源 DELETE 用来删除资源
+3. 当前浏览器只支持post/get请求，因此为了得到put/delete的请求方式需要使用Spring提供的 HiddenHttpMethodFilter 过滤器进行转换
+*** Rest应用案例
+web.xml
+#+begin_src xml
+  <filter>
+    <servlet-name>hiddenHttpMethodFilter</servlet-name>
+    <servlet-class>org.springframework.web.filter.HiddenHttpMethodFilter</servlet-class>
+  </filter>
+  
+  <filter-mapping>
+    <servlet-name>hiddenHttpMethodFilter</servlet-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+#+end_src
+springDispatcherServlet-servlet.xml
+#+begin_src xml
+  <!-- 能支持SpringMVC高级功能，比如JSR303校验，映射动态请求 -->
+  <mvc:annotation-driven></imvc:annotation-driven>
+  <!-- 将SpringMVC不能处理的请求交给Tomcat，比如请求css.js等 -->
+  <mvc:default-servlet-handler/>
+#+end_src
+*** 发送DELETE请求
+使用删除超链接来提交隐藏表单
+隐藏表单及超链接
+#+begin_src html
+  <a href="user/book/600" id="deleteBook">删除指定id的书</a>
+  <form action="" method="post" id="hiddenForm">
+      <input type="hidden" name="_method"/>
+  </form>
+#+end_src
+使用jqery提交
+#+begin_src js
+  $("#deleteBook").click(function(){
+      $("hiddenForm").attr("action, this.href");
+      $(":hidden").val("DELETE");
+      $("#hiddenForm").submit();
+      return false; // 改变点击超链接的行为，不再提交
+  })
+#+end_src
+*** 解决jsp只支持GET POST
+return "redirect:/user/success";
+** 获取请求头
+RequestHeader 作用于方法参数上
+1. @RequestHeader("Accept-Encoding") 
+** 获取Java对象
+1. 方法的形参用对应的类型指定即可
+2. 如果是属性是对象，通过 字段名.字段名 获取，
+3. 如果提交的数据的参数名和对象的字段名不匹配，则对象的属性就是null
+** 使用Servlet API
+1. 使用servlet api，需要引入tomcat/lib下的servlet-apiapiapi,jar
+2. 直接写在方法声明上，HttpservletRequest HttpServletResponse
+3. 除了 HttpServletRequest，HttpServletResponse还可以其它对象也可以这样的形式获取
+4. HttpSession InputStream OutputStream Reader Writer
+5. 其中一些对象也可以通过 HttpServletRequest/HttpServletResponse对象获取，比如Session对象，既可以通过参数传入，也可以可以通过requesst.getSession()获取，效果一样，推荐使用参数形式传入，更加简单明了
+** 模型数据-放入Request域
+1. 说明，控制器/处理器中获取的数据 如何放入request域，然后在前端（VUE/JSP……）取出显示
+*** 模型数据-默认机制放入request域
+1. 将提交的数据，封装到java对象，springmvc会自动的将其放入到request域
+*** 模型数据-HttpServletRequest使用
+requist.setAttribute("address", "beijing")
+**** 分析一下springmvc默认存放对象到request域中，属性名是
+属性名是类名/类型名，首字母小写，所以 =前端从request域获得数据的变量名与后端的变量名无关=
+*** 模型数据-Map的使用
+map对象定义在方法的参数中
+**** 原理分析： springmvc会遍历map，然后将map的k-v，存放到request域
+*** 模型数据-ModelAndView使用
+#+begin_src java
+  ModelAndView modelAndView = new ModelAndView();
+  modelAndView.addObject("address", "shanghai");
+  // 这里指定跳转的视图名称
+  modelAndView.setViewName("vote_ok");
+  return modelAndView;
+#+end_src
+**** 使用注意事项
+1. 从本质看，请求响应的方法return "xx"，是返回了一个字符串，其实本质是返回了一个ModelAndView对象，只是默认被封装起来的
+2. ModelAndView既可以包含model数据，也可以包含视图信息
+3. ModelAndView对象的addObject方法可以添加 key-val数据，默认在request域中
+4. ModelAndView对象setViewName方法可以指定视图名称
+** 模型数据-数据放入Session域
+将session对象放入方法的参数中
+** 模型数据-@ModelAttribute
+*** 基本说明
+开发中，有时需要使用某个前置方法(比如prepareXxx(),方法名由程序员定)给目标方法准备一个模型对象
+1. @ModelAttribute 注解可以实现这样的需求
+2. 在某个方法上，增加了@ModelAttribute注解后
+3. 那么在调用该Handler的任何一个方法时，都会先调用这个方法。类似于AOP的前置通知
+*** @ModelAttribute最佳实践
+● 修改用户信息(就是经典的使用这种机制的应用)，流程如下:
+1. 在修改前，在前置方法中从数据库查出这个用户
+2. 在修改方法(目标方法)中，可以使用前置方法从数据库查询的用户
+3. 如果表单中对用户的某个属性修改了，则以新的数据为准，如果没有修改，则以数据库的信息为准，比如，用户的某个属性不能修改，就保持原来的值
+** 视图和视图解析器
+*** 基本介绍
+1. 在springMVC中的目标方法最终返回都是一个视图(有各种视图).
+2. 返回的视图都会由一个视图解析器来处理(视图解析器有很多种)
+*** 为什么需要自定义视图
+1. 在默认情况下，我们都是返回默认的视图, 然后返回的视图交由 SpringMVC的InternalResourceViewResolver 视图解析器器来处理的
+2. 在实际开发中，我们有时需要自定义视图, 这样可以满足更多更复杂的需求。
+*** 自定义视图实例-实现
+#+begin_src java
+  @Component(value="myView")
+  public class MyView extends AbstractView {
+      @Override
+      protected void renderMergedOutputModel(Map<String, Object> model, HttpServletRequest request, HttpServletResponse response){
+  	sout("进入到自己的视图");
+  	request.getRequestDispatcher("/WEB-INF/pagers/my_view.jsp").forward(request, response);
+      }
+  }
+#+end_src
+**** 配置自定义视图解析器
+#+begin_src xml
+  <!--
+      1. BeanNameViewResolver可以去解析我们自定义的视图  
+      2. order表示视图解析器执行的顺序，值越小，优先级越高
+      3. order 的默认值是 最低优先级，值为 Integer.MAX_VALUE
+  -->
+    <bean class="org.springframework.web.servlet.view.BeanNameViewResolver">
+        <property name="order" value="99"/>
+    </bean>
+#+end_src
+*** 自定义视图-工作流程
+1. SpringMVC 调用目标方法,返回自定义View在IOC容器中的名字
+2. SpringMVC 调用 BeanNameViewResolver 解析视图:从IOC 容器中获取 返回id 值对应的bean,即自定义的View的对象
+3. SpringMVC 调用自定义视图的 renderMergedOutputModel方法渲染视图
+4. 说明:如果在SpringMVC 调用目标方法, 返回自定义View在IOC容器中的 id, 不存在，则仍然按照默认的视图处理器机制处理.
+*** 多个视图解析器执行流程
+1. 当自定义视图解析器的优先级高于默认视图解析器，如果自定义视图解析不存在，会接着调用默认视图解析器
+   原理
+   1. 当ioc容器找不到自定义视图，会返回null，接着回到DispatcherServlet，会再次进入for循环
+   2. 在前端控制器有一个属性叫做viewResolvers，保存多个视图解析器，是一个ArrayList，优先级高的排名在前
+   3. 取出第二个视图解析器，此时 viewResolver 已经切换成了默认的视图解析器，默认视图解析器包含 prefix suffix
+      提问：默认视图解析器是在哪拿到的前缀 后缀
+   4. 解析器执行，返回了view，属性url是根据前后缀拼接，如果页面不存在，就会出现404
+2. 提问：如果默认视图解析器优先级高，但没有找到页面，会不会走自定义视图解析器呢
+   不会，因为默认视图解析器优先级高，所以成为viewResolvers的第一个元素，因为默认视图解析器始终会返回视图，不管url指向的页面是否存在，当视图不为空，就会退出循环
+** 指定请求转发或者重定向
+1. 默认返回的方式是请求转发，然后用视图处理器进行处理，比如在目标方法中这样写
+   return "ok";
+2. 也可以在目标方法直接指定重定向或转发url地址
+3. 如果指定重定向，不能定向/WEB-INF目录中
+* 自己实现SpringMVC
+** 阶段1：开发DispatcherServlet
+1. DispatcherServlet extends HttpServlet
+2. 创建springmvc.xml 充当原生的applicationContext-mvc.xml文件（就是；spring的 容器配置文件）
+3. 在web.xml配置DispatcherServlet拦截所有请求并且自动启动
+4. 给DispatcherServlet配置参数，指定要操作的spring容器配置文件 contextConfigLocation
+** 阶段2：完成客户端/浏览器可以请求控制层
+*** 创建自己的Controller和自定义注解
+1. 包springmvc 放置 springmvc底层机制（servlet、注解，解析工具），外边 放 工程相关的文件
+2. 在controller包建立MonsterController，方法的参数是request response，给浏览器回一句话printWriter.wriite("<h1>妖怪列表信息</h1>")，增加注解 @Controller 和 @RequestMapping(value = "/list/monster")
+*** 配置springmvc.xml
+1. 充当springmvc的配置文件
+2. 指定要扫描的基本包以及子包 component-scan base-package
+*** 编写XMLParer工具类，可以解析springmvc.xml，取得扫描包
+#+begin_src java
+  inputStream = XmlParser.class.getClassLoader().getResourceAsStream(xml文件名);
+  document = saxReader.read(inputStream);
+#+end_src
+*** 开发WebApplicationContext，充当Spring容器-得到扫描包的全路径列表
+1. 在springmvc/context包，建立 WebApplicationContext
+   1. 属性 classFullPathList
+      保存扫描包/子包的类的全 路径
+   2. 调用XMLParer，得到扫描包，再得到全路径，封装到init方法
+2. 在 DispatcherServlet的 init方法中，调用 WebApplicationContext的 init方法
+3. 提问：两个 init方法，有什么区别
+   1. DispatcherServlet是servlet，它的init方法，会在启动tomcat时调用，并且只会调用一次
+   2. WebApplicationContext的 init方法只是普通方法
+*** 开发WebApplicationContext，充当Spring容器-实例化对象到容器中
+1. 遍历扫描包路径的文件，如果是文件夹，需要递归
+   scanPackage(pack + "." + f.getName());
+   解释：
+   1. scanPackage是 WebApplicationContext的方法，也是递归调用的方法
+   2. pack 是扫描包的扫描包名 比如com.xxx
+   3. f是扫描包路径下的文件夹
+2. 如果是文件，拼接包名，得到全类名
+   pack + "." + f.getName().replaceAll(".class", "");
+3. 将全类名放入容器
+4. 根据全类名反射，将包含 @controller的类实例化进容器
+*** 完成请求URL和控制器方法的映射关系
+*** 完成DispatcherServlet分发请求到对应的控制器方法

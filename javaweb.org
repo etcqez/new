@@ -413,3 +413,99 @@ EL 表达式是为了替换 jsp 中的表达式脚本，JSTL是为了替换代�
 3. 如何获得method, uri, parametersMapping
    1. 读取请求头的第一行
    2. 取出？的位置，前面的为uri，后面的为参数
+* 实现Tomcat底层机制+自已设计Servlet
+通过socket得到输入输出流和浏览器通信，字节流可以转成字符流
+1. 客户端发送HTTP请求，tomcat返回http响应
+3. 一个请求对应一个线程
+** 代码：v1
+所有代码均在main方法中执行
+*** socket通信
+1. 3{是 while (!serverSocket.isclosed())
+2. 4{是 while ((mes = bufferedReader.readLine()) != null)
+*** 提出问题
+1. 为什么抛出异常？
+2. 除了关闭输入输出流，为什么还要关闭socket
+3. 答：因为是v1版本，只通信一次
+** 代码：v2 加入多线程
+main方法将socket交给线程类，将接收和发送请求的代码移至线程类的run方法，main方法调用线程类
+此模式是阻塞IO(BIO)，每一次请求都会创建一个线程
+*** 改进点
+1. 异常处理的方式由抛出改为try catch
+2. 将和浏览器通信的分开了，做成了一个线程
+*** 提出问题
+1. 为什么in outputStream socket 都在 try 里面关闭
+2. 为什么socket在try里面关闭了，还要在 finally 里面关闭
+   必须确保 socket 关闭，因为多了会阻塞
+   1. 为什么要在try里面关一次呢
+3. socket 是如何传给线程类的
+   创建线程类对象时，通过线程类的构造器传入socket给属性
+   1. 线程是如何启动的
+      将线程类对象放入 new Thread，再.start
+4. 为什么会收到两次请求
+   小图标算一次。取消禁用缓存就只会收到一次请求
+** 代码：v3 处理请求和响应
+新增功能：除了发送和接收请求外，还对请求进行处理
+新增处理请求的代码，
+*** HttpRequest
+**** 结构
+1. 封装请求数据的类
+   将接收数据的第一行抽取到类的属性中
+   1. 代码都在构造方法中
+   2. 创建方式：往构造方法传入，从 socket 得到 inputStream
+**** 复杂问题
+1. 请求参数如何封装成map
+   1. 截取子串，从？号的下一个直到最后
+   2. 以&分割字符串，得到每个元素为"xxx=xxx"的数组
+   3. 遍历数组的每个元素，以=分割字符串，获取只有两个元素的数组，分别为键和值，并放入map
+**** 注意事项
+1. 封装请求数据的类不可以关闭 inputStream，因为和 socket 关联，关闭的同时也意味着 socket 关闭，后续无法从 socket 获取 outputStream
+*** HttpResponse
+封装响应数据的类
+**** 结构
+1. 提供一个 outputStream 的方法
+2. 提供一个默认的响应头
+** 代码 servlet
+*** 结构
+1. Servlet 接口
+   只保留3个核心方法声明方法，init service destroy
+2. HttpServlet 抽象类，实现 Servlet接口
+   抽象类使用的是模板设计模式
+3. 自己的 CalServlet 继承了 HttpServlet
+*** 说明
+1. servlet 是被 tomcat 调用的
+2. 上面封装的 HttpRequest HttpResponse 就是在servlet中调用
+3. HttpRequest 封装了请求数据，HttpResponse 可以得到输出流
+4. 此时还是直接 new 对象的方式创建 servlet对象
+3. 此时servlet的service方法是直接在tomcat调用的
+*** 提出问题
+1. request response 是在哪里创建的
+   在线程类中，在得到 socket 之后
+2. request response 是在哪里传入给doget方法的
+   tomcat 在创建 servlet对象后 调用doget时，传入
+4. 为什么输入地址可以访问servlet
+   只要ip端口正确，浏览器就可以往自己的tomcat发送数据，此时servlet的service方法是直接在tomcat被指明调用的，还没有对请求的url分流，所以不管什么资源路径都会调用指明的方法
+** 代码 v4 对请求进行分流
+*** 说明
+1. v4其实是servlet容器
+2. 调用方式是：从请求对象获取uri，根据uri获取servlet名字，再根据servlet
+   名字获取servlet对象
+3. 如果获取到的servlet对象为null，就通过输入流发送404页面
+   =会出现异常，原因是：ConcurrentHashMap的get方法参数为null时会抛异常，即get(uri)获取servletname到空，get(servletname)会抛异常=
+   解决方法
+   1. 使用HashMap替代
+   2. if(servletname == null){servletname = ""}
+*** 改进点
+1. 创建servlet对象不再手动创建，而是从servlet窗口根据uri获取
+*** v4类
+1. public static final ConcurrentHashMap<String, HttpServlet> servletMapping
+   静态最终属性 servletMapping
+   1. key为web.xml 配置的servlet名字
+   2. value为根据全类名创建的对象
+2. public static final ConcurrentHashMap<String, String> servletUrlMapping
+   1. =key为url，因为一个url只能匹配一个servlet=
+   2. value为servlet名字
+*** 问题
+1. 当配置第2个servlet时，servletMapping有2个，但是servletUrlMapping只有1个
+   配置文件url-pattern重复了，所以url不能相同，否则会被覆盖
+*** 作业
+1. 如果是静态资源就直接返回

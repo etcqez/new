@@ -302,3 +302,224 @@ tapir
 貘, 獏
 adore
 崇拜, 爱慕, 倾慕
+spearheaded
+带头, 率先, 矛头
+desegregate
+取消种族隔离, 分离, 反种族隔离
+trance
+恍惚状态, 恍惚, 发呆
+swoop
+猛扑, 落下, 落
+Scissor
+剪刀, 削减, 剪取
+parlors
+客厅, 殡仪馆, 店
+breeder
+饲养员, 增殖, 繁育
+terrific
+了不起, 够意思, 优秀
+dazzle
+耀眼, 炫, 耀
+drab
+单调, 黄褐色, 褐色布
+makeover
+改头换面, 改造, 化妆
+frumpy
+邋遢, 不整洁, 蓬松的
+hype
+炒作, 大肆宣传, 热度
+flattered
+受宠若惊, 奉承, 荣幸
+pupil
+学生, 瞳孔, 弟子
+sensational
+轰动的, 耸人听闻, 艳
+fabulous
+极好, 优秀, 捏造的
+therapeutic
+治疗的, 治疗, 疗效
+daffodils
+水仙花, 水仙, 喇叭水仙
+extravaganza
+盛会, 盛事, 盛大的演出
+sludge
+污泥, 淤泥, 泥
+inflicts
+造成, 施加, 加以
+uppercut
+勾拳, 上勾拳, 上钩拳
+pipsqueak
+小个子, 小家伙, 小屁孩
+contestants
+选手, 竞争者, 参赛者
+gravel
+碎石, 砾石, 砂砾
+contender
+竞争者, 角逐, 争夺者
+gloppy
+粘稠的, 黏糊糊的, 稠密的
+glue
+胶, 胶水, 粘
+confrontation
+对抗, 冲突, 对质
+overboard
+落水, 过分, 过火
+chill
+镇, 冷静, 寒意
+ingenious
+巧妙, 灵巧, 精巧
+sewer
+下水道, 阴沟, 渗沟
+intake
+摄入, 吸入, 摄取
+valve
+阀门, 活门, 阀
+smokestacks
+烟囱, 烟筒, 烟囱筒
+suffocated
+窒息, 闷死, 憋死
+pesky
+讨厌, 烦人的, 讨厌的
+stinking
+臭, 臭烘烘, 发臭
+dimwit
+傻瓜, 笨蛋, 蠢货
+twerp
+twerp, 傻瓜, 白痴
+blackout
+停电, 断电, 暗转
+streaker
+裸奔, 裸奔者, 脱衣跑者
+stalker
+跟踪, 跟踪狂, 跟踪者
+slimy
+泥泞的, 滑的, 泥的
+clogging
+堵塞, 阻塞, 堵
+turbines
+涡轮, 涡轮机, 透平
+apostrophes
+撇号, 省略号, 撇 号
+assassinated
+暗杀, 刺杀, 行刺
+beacon
+灯塔, 指路明灯, 标灯
+speedy
+迅速, 速, 讯
+tizzy
+如痴如醉, 慌乱, 紧张
+scary
+可怕, 恐怖, 吓人
+cyber
+网络, 赛博, 数码
+vicinity
+附近, 邻近, 附近一带
+witnessed
+目睹, 见证, 表明
+conundrum
+难题, 谜, 谜语
+controversial
+争议, 论争的, 争论的
+floss
+绵, 牙线, 缝线
+pileups
+堆积, 堆叠, 堆砌
+crumpled
+弄皱, 皱, 皱巴巴
+airbags
+安全气囊, 气囊, 防护气囊
+cockroach
+蟑螂, 蟑, 蠊
+outcroppings
+露头, 露出, 露岩
+crank
+曲柄
+sledding
+雪橇, 滑雪, 雪橇运动
+tobogan
+雪橇
+freezing
+冻结, 结冰, 冻
+epitome
+缩影, 概括, 提要
+obese
+肥胖, 痴肥, 膆
+Valentine
+情人, 情人节, 瓦伦丁
+french fries
+炸薯条
+condiment
+调味品
+mustard
+芥末
+salsa
+沙拉酱
+vinegar
+醋
+ketchup
+番茄酱
+water intake valve
+进水阀
+snide remarks
+冷嘲热讽的言论
+Detestable
+令人厌恶
+plows the ground
+耕地
+sensational
+震惊
+mansion
+豪宅
+run of the mill
+普通的，一般的，不突出的
+leech seed
+寄生种子
+perfidious people
+狡猾之人
+metamorphosis attack
+变形态攻击
+disperse
+散发
+tail wag
+摇尾巴
+on a slant
+倾斜
+fickle
+善变的
+curriculum
+课程, 课表, 课
+diarrhea
+腹泻, 拉肚子, 泻
+penalty
+n. 惩罚
+temptation
+n. 诱惑
+stake
+风险
+remedy
+药物
+dampen
+v. 抑制
+keenly
+adv. 敏锐地
+aviate
+驾驶飞机
+indispensable
+adj. 必不可少的
+adequate
+adj. 足够的
+carpenter
+n. 木匠
+resemble
+v. 像
+sophisticated
+adj. 复杂的
+stale
+adj. 乏味的
+welfare
+n. 幸福，福利
+inadequate
+adj. 不足的
+frown
+v. 皱眉
+

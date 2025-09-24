@@ -1,0 +1,253 @@
+* Spring
+** 技巧
+   1. 调试技巧
+      1. Debugger -> Data Views -> Java
+	 - 去掉勾选
+	   1. Hide null elements in arrays and collections
+	   2. Enable alternative view for Collecttions classes
+	      HashMap 不显示 table
+   2. 导入空间不显示
+      在右上角检查语法图标选择 All Problem
+** getBean("beanId") 执行流程
+   1. 根据beanId，先在beanDefinmap里面查是不是单例的，如果是，就直接从singtonObject里面获取，如果不是，就创建
+** xml如果不指定id，运行会不会报错
+   不会，系统会默认分配id。分配id的规则是全类名#0，全类名#1，我们可以通过debug方式来查看
+** 创建bean对象
+   1. 通过类型来获取bean对象
+      ioc.getBean(Monster.class)
+      前提：要求ioc容器中的同一个类的bean只能有一个，否则会抛出异常 NoUniqueBeanDefinitionException
+** Bean创建顺序
+   1. 在spring的ioc容器，默认是按照配置的顺序创建bean对象
+   2. 如果配置 depends-on="bean id"，被依赖的对象会先创建
+   3. 如果有ref，也还是按照配置的顺序创建，但ref的对象的引用关系是在创建对象之后，这样才不会造成空引用
+** Bean的单例和多实例
+   默认是按照单例创建的，配置以多实例创建：scope="prorotype"
+   - 使用细节
+     1. 默认是单例singleton,在启动容器时，默认就会创建，并放入到singletonObjects集合
+     2. 当<bean scope="prototype">设置为多实例机制后，该bean是在getBean()时才创建
+     3. 如果是单例singleton,同时希望在getBean时才创建，可以指定懒加载lazy-init="true"(注意默认是false)
+     4. 通常情况下,lazy-init就使用默认值false,在开发看来,用空间换时间是值得的，除非有特殊的要求
+     5. 如果scope="prototype"，这时你的lazy-init属性的值不管是ture，还是false都是在getBean时候，才创建对象。
+** Bean的生命周期
+   1. init-method="init" 指定bean的初始化方法，在setter方法后执行
+   2. destroy-method="destroy" 指定bean的销毁方法，在容器关闭的时候执行
+      1. 关闭容器
+	 ((ConfigurableApplicationContext)ioc).close();
+   3. 方法名可以是任意的
+** 配置bean后置处理器
+   该处理器会在bean初始化方法调用前和初始化方法调用后被调用
+   1. implements BeanPostPrcessor {} 就是后置处理器
+   2. postProcessBeforeInitialization(Object bean, String beanName)
+      1. bean
+	 传入的在IOC容器中创建的bean
+      2. beanName
+	 传入的在IOC容器中创建的bean的id
+   3. xml和配置普通bean方式相同
+** 给bean注入属性
+1. Spring底层给bean对象属性赋值使用的是setter方法
+   1. 通过构造器给属性赋值
+      <constructor-arg value="200" index="0"/>
+      1. index表式构造器的第几个参数，从0开始计算的
+      2. 除了可以通过index还可以通过 name / type来指定参数方式
+      3. 类的构造器，不能有完全相同类型和顺序的构造器，所以可以通过type来指定
+   2. 通过p名称空间给属性赋值
+      p:monsterId="500"
+2. 使用utillist进行配置
+   用来保存一个list，达到数据复用
+   1. <util:list id="myBookList"> 多个value标签 </util:list>
+   2. 通过 ref="myBookList" 引用
+   3. 在使用util:list名称空间的时候，需要引入相应的标签，一般来说通过alt+enter会自动加入，如果没有就手动添加一下
+3. 属性级联赋值配置
+   spring的ioc容器，可以直接给对象属性的属性赋值，即级联属性赋值
+   1. 先引用
+      <property name-"dept" ref="dept"/>
+   2. 再给属性赋值
+      <property name-"dept.name" value="Jave开发部门"/>
+      底层会调用setter方法
+4. 通过静态工厂获取bean
+   bean id class="" factory-method="静态方法" > constructor-arg value="参数"
+   1. class是静态工厂类的全路径
+   2. factory-method表示是指定静态工厂类的哪个方法返回对象
+   3. constructor-arg value="monster02" value是指定要返回静态工厂的哪个对象
+5. 通过实例工厂获取bean
+   首先需要有实例对象
+   bean id factory-bean="实例id" factory-method="实例方法" > constructor-arg="参数"
+6. 重点：通过FactoryBean获取bean
+   1. MyFactoryBean implements FactoryBean<Monster>
+      1. 定义属性 key monster_map
+      2. 代码块中给 monster_map 填充数据
+      3. 实现 getObject getObjectType isSingleton 方法
+   2. xml
+      bean id class="FactoryBean的全类名" > property name="key的变量名" value="key的值"
+7. bean配置信息重用
+   1. parent-"要继承的bean id"
+   2. 这样就不需要给属性赋值
+   3. 如果一个bean指定了 abstract="true"，表明了这个bean只能被继承
+8. 通过属性文件配置bean
+   1. 创建 my.properties
+   2. context:property-placeholder location="classpath:myproperties"
+   3. ${属性文件的key}
+   4. 属性文件如果有中文会乱码，解决方式：由于文件在读取到内存中使用的是unicode，使用中文的 unicode 编码
+9. 自动装配bean
+   给引用属性初始化的另一种方法
+   1. autowire="byType"
+      通过类型的方式给对象属性，自动完成赋值
+      1. 根据bean的引用类型，在容器中去找有没有该类型的bean，会按照类型自动装配
+      2. 要求：不能有两个这样的bean
+   2. autowire="byName"
+      通过名字完成自动装配
+      1. 根据bean的引用变量名的setXxx()的xxx，在容器中去找有没有该xxx名字的bean
+      2. 是按照setter名来装配的，因为底层是用反射进行装配的，反射是通过方法来完成的
+** 注解
+1. xml
+   context:component-scan base_package="包的全路径"
+   1. 排除某个注解
+      context:component-scan > context:exclude-filter type="annotation" expression="注解的全路径"
+   2. 指定自动扫描哪些注解类
+      context:component-scan use-default-filters="false" > context:include-filter type="annotation" expression="注解的全路径"
+      1. use-default-filters="false"
+	 取消默认过滤机制
+2. 注解配置bean注意事项和细节
+   1. 默认情况：类名首字母小写作为id，也可以使用注解的value属性指定id值，并且value可以省略
+3. 自动装配
+   1. @Autowired
+      在ioc容器，根据实例的个数选择按类型，或者是按属性名装配
+      1. 在IOC容器中查找待装配的组件的类型，如果有唯一的bean匹配，则使用该bean装配
+      2. 如果有多个，就以属性名作为id去匹配
+   2. @Resource(name="xxx")
+      1. name="xxx"
+	 表示装配id=xxx的对象
+      2. type = xxx.class
+	 表示按照xxx.class类型进行装配，这时要求容器中，只能有一个这样类型的对象
+      3. 如果@Resource没有指定name 和 type,则先使用byName注入策略, 如果匹配不上，再使用byType莱略，如果都不成功，就会报错
+   3. @Autowired 和 @Qualifier(value="xxx") 一起使用
+      也可以按照id=xxx自动装配
+4. 泛型依赖注入
+   传统方法是将 PhoneDao / BookDao自动装配到 BookService/ PhoneSerive 中，当这种继承关系多时，就比较麻烦，可以使用spring提供的泛型依赖注入
+   #+begin_src java
+     // BaseService.java
+     @Autowired
+     private BaseDao<T> baseDao;
+   #+end_src
+   1. 在泛型类BaseService中，在一个带有泛型的属性上使用
+   2. 这样BaseService的子类，即使没有装载BaseDao的子类，也可以使用BaseDao的子类对象
+** 自己实现Spring注解配置Bean机制
+1. 思路分析
+   1. HspSpringConfig.java配置类
+      作用类似beans.xml配置文件，用来指定扫描的包
+   2. 该类会标识一个注解 @ComponentScan(value="com.xx.yy")
+   3. HspSpringApplicationContext.java spring容器
+      1. 传入 HspSpringConfig.class
+2. 代码实现
+   1. 搭建基本结构并获取扫描包
+   2. 获取扫描包下的所有.class文件
+   3. 获取全类名 反射对象 放入容器
+3. 详细步骤
+   1. 先拿到配置类的class
+      HspSpringConfig.class
+   2. 得到类的注解，进而获得value，也就是包的全类名path
+      class对象.getDeclaredAnnotation(ComponentScan)
+   3. 获取扫描包下的所有.class文件
+      1. 扫描包目录 = 项目目录 + 包目录
+      2. 得到类的加载器，因为项目目录是在out下
+	 HspSpringApplicationContext.class.getClassLoader()
+      3. 通过类的加载器获取到要扫描包的url
+	 1. path = path.replace(".", "/")
+	 2. =URL resource = classLoader.getResource(path)=
+      4. 根据url，创建文件
+	 new File(resource.getFile())
+      5. 遍历文件，得到.class文件的绝对路径
+      6. 获取每个类名，拼接包名，获得全类名
+      7. 根据全类名，获得class对象 aClass
+	 =Class<?> aClass = classLoader.loadClass(classFullName)= 不会调用静态方法
+      8. 判断该类是否有4个注解
+	 aClass.isAnnotionPresent(Component.class)
+      9. 反射对象，并放入容器
+	 1. =Class<?> clazz = Class.forName(classFullName)= 会调用静态方法
+	 2. Object instance = clazz.newInstance()
+** AOP
+1. 动态代理
+   一个接口的某个方法run()，几个不同类型的对象实现这个方法，执行run()方法时，有在执行这个方法之前、之后做一件事
+   1. 给接口定义一个代理类
+      Vehicle 接口 VehicleProxyProvider 代理类
+   2. 定义属性
+      private Vehicle target_vehicle;
+      表示真正要执行的对象
+   3. 编写一个方法 getProxy()，可以返回一个代理对象
+      1. Object proxy = Proxy.newProxyInstance(classLoader, interfaces, invocationHandler)
+	 1. target_vehicle.getClass().getInterfaces()
+	    获得接口信息
+	 2. invocationHandler是接口
+	    invoke(object proxy, Method method, Object[] args)
+	    1. proxy 表示代理对象
+	    2. method 就是通过代理对象调用方法时，的哪个方法
+	    3. invoke()返回值为，代理对象执行方法后的返回结果
+*** 切面编程
+切面类的方法可以根据需要切入到任意类的任意方法
+1. 相关注解
+   1. 前置通知：@Before
+   2. 返回通知：@AfterReturning
+      目标方法调用后
+   3. 异常通知：@AfterThrowing
+   4. 后置通知：@After
+      相当于 finally 语句快，不管是否发生异常都会执行
+   5. 环绕通知：@Around
+2. xml
+   <aop:aspectj-autoproxy/>
+3. 切面类
+   1. 类注解：@aspectj
+   2. 方法注解
+   3. 获取返回值
+      @AfterReturning(return="res")
+   4. 获取异常信息
+      @AfterThrowing(throwing="throwable")
+4. 细节
+   1. 使用ioc.getBean()，获取注入的对象，需要以接口的类型来获取
+   2. 通过debug，ioc容器里面还是原生的，一旦进行getBean，获取的就是代理对象，所以代理对象也可以通过id获取，但也需要转成接口类型
+   3. 使用接口获取代理对象，实现接口的类不能有2个
+      解决方法：通过名字来获取
+5. 切入表达式细节
+   1. 切入表达式也可以指向类的方法,这时切入表达式会对该类/对象生效
+   2. 切入表达式也可以指向接口的方法,这时切入表达式会对实现了接口的类/对象生效
+   3. 切入表达式也可以对没有实现接口的类，进行切入通过继承得到的代理对象
+6. 切入表达式重用
+   1. 定义一个切入点，在方法上加上 @PointCut(value="execution(切入表达式)")
+   2. @Before(value="切入点方法名()")
+7. 切面类执行顺序
+   1. 切面类注解 @order(value=2)
+   2. 值越小，优先级越高
+*** 基于XML配置的AOP
+* Spring底层
+** 前置知识
+*** Spring XML注入bean
+*** Spring 注解方式注入bean
+*** Spring AOP动态代理实现
+** xml文件位置
+   1. 如果我们是普通的java项目，beans.xmt放在src下
+   2. 如果我们是java maven 项目，beans.xml 放在 src/main/resources
+** spring怎么实现一个注解 @Scope(value="prototype") 就能决定是单例，还是多例的，底层是如何实现的
+** 加入 @Autowired Spring容器是如何实现依赖注入
+** Spring 底层实现,如何实现Bean后置处理器机制
+** 步骤
+1. 配置类 -> ComponentScan注解 -> 扫描包
+2. 完整的扫描包路径 = 项目路径 + 扫描包
+3. 遍历文件 -> 过滤出class文件并提取类名与扫描包拼接 -> 创建class对象，并判断其注解是否包含 Component
+* SpringMVC
+是WEB层框架，接管了Web层组件，比如控制器，视图，视图解析，不需要实现Servlet
+** web.xml
+tomcat的配置文件
+#+begin_src xml
+  <servlet>
+    <servlet-name>springDispatcherServlet</servlet-name>
+    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+    <!--配置属性 contextConfigLocation，指定DispatcherServlet 去操作的spring配置文件-->
+    <init-param>
+      <param-name>contextConfigLocation</param-name>
+      <param-value>classpath:applicationContext-mvc.xml</param-value>
+    </init-param>
+    <!--在web项目启动时，就自动的加载DispatcherServlet-->
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+#+end_src
+== 如果不指定spring容器配置文件，默认会从寻找/WEB-INF/springDispatcherServlet-servlet.xml，也就是 servlet-name-servlet==
+
