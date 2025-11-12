@@ -604,6 +604,147 @@ map对象定义在方法的参数中
 2. 如果是文件，拼接包名，得到全类名
    pack + "." + f.getName().replaceAll(".class", "");
 3. 将全类名放入容器
-4. 根据全类名反射，将包含 @controller的类实例化进容器
+4. 遍历全类名，根据全类名反射，将包含 @controller的类实例化进ioc容器
+5. key为类名首字母小写，value为bean对象
+   =类名：clazz.getSimpleName()=
 *** 完成请求URL和控制器方法的映射关系
+1. 定义 Handler 类用来保存url和控制器方法的映射关系
+   属性：
+   1. url
+   2. controller
+   3. method
+2. 遍历map（ioc容器），取得bean对象的class，拿到每个bean的方法对象数组
+3. 遍历所有方法，得到含有@RequestMapping的值
+4. 创建Handler对象，将 url，控制器对象，方法对象放入
+5. 将Handler对象放入handlerList集合
 *** 完成DispatcherServlet分发请求到对应的控制器方法
+1. 先获取用户请求的uri
+   request.getRequestURI();
+2. 根据uri找到handler
+3. 有一个问题，uri会携带一个工程路径，而handler在保存时，没有加上，有2个解决方法
+   1. 就是在保存handler时加上工程路径
+   2. 修改idea的工程路径为/，这样更简洁
+4. 执行分发
+   handler.getMethod().invoke(handler.getController(), request, response);
+** 阶段3：从web.xml动态获取springmvc.xml
+1. 利用servletConfig，获得xml文件中配置的配置文件的位置
+2. 通过配置文件，从DispatcherServlet传递配置文件位置到WebApplicationContext
+** 阶段4：完成自定义@Service注解功能
+1. 定义@Service
+2. 遍历全类名，根据全类名反射，将包含 @Service的类实例化进ioc容器
+3. 获取@Service的value，作为beanName
+4. 如果beanName为空
+5. 原生的spring可以通过接口名和类名来注入ioc容器
+   1. 得到所有接口名
+   2. 遍历接口，然后通过多个接口名来注入
+   3. 获得接口名，反射创建service实现类，存入ioc容器
+   4. 再存一份通过类名首字母小写来获取的
+** 阶段5：完成Spring容器对象的自动装配 @Autowried
+1. 定义 @AutoWired
+2. 遍历ioc容器中的所有注入的bean对象，然后获取到bean的所有字段/属性，判断是否需要装配
+   1. 遍历ioc容器，获取bean的所有字段/属性
+   2. 遍历所有字段，判断字段是否有@AutoWired
+   3. 获取@AutoWired
+   4. 如果@AutoWired设置value来进行装配
+   5. 防止属性是private，需要暴力破解
+      declaredField.setAccesdible(true);
+   6. 装配属性
+      declaredField.set(bean, ioc.get(beanName));
+      1. bean：当前字段所对应的bean，是controller
+      2. ioc.get(beanName)：装配的目标，是service
+	 1. beanName：@AutoWired的value
+   7. 如果@AutoWired没有设置value，以字段类型的首字母小写，作为名字来进行装配
+      #+begin_src java
+	// 得到字段的类型
+	type = declaredField.getType();
+	type.getSimpleName();
+      #+end_src
+** 阶段6：完成控制器方法获取参数 @RequestParam
+*** 封装HttpServletRequest和HttpservletResponse到参数数组
+1. 得到目标方法的所有形参参数信息（数组）
+   parameterTypes = handler.getMethod().getParameterTypes();
+2. 创建一个参数数组（对应实参数组），在后面调用目标方法时，会使用到
+   params = new Object[parameterTypes.lengh];
+3. 遍历parameterTypes形参数组, 根据形参数组信息，将实参填充到实参数组
+#+begin_src java
+  for(int i = 0; i < parameterTypes.length; i++) {
+      // 取出每一个形参类型
+      Class<?> parameterType = parameterTypes[i];
+      // 如果这个形参是HttpServletRequest, 将request填充到params
+      if("HttpServletRequest".equals(parameterType.getSimpleName())){
+  	// 形参在第几个位置，实参就在第几个位置，形参和实参的位置一一对应
+  	// request是servlet的参数
+  	params[i] = request;
+      }else if("HttpServletResponse".equals(parameterType.getSimpleName())){
+  	params[i] = response;
+      }
+  }
+#+end_src
+*** 封装Http请求数据到参数数组
+1. 增加 @RequestParam
+   1. @Taarget(ElementType.PARAMETER)
+      指定标注在目标方法的参数上
+2. 将http请求参数封装到params数组中，要注意填充实参的时候，顺序问题
+   1. 获取http请求的参数
+      Map<String, String[]> parameterMap = request.getParmeterMap();
+      Map<String, String[]>解读：
+      1. String：表示http请求的参数名
+      2. String[]：表示httpp请求的参数值
+   2. 遍历parameterMap 将请求参数，得到参数名和参数值
+   3. 按照顺序填充到实参数组
+* MyBatis 
+** 配置文件
+1. mybatis-config.xml
+   1. 配置数据库连接/数据源
+   2. 管理XXMapper.xml
+2. XXMapper.xml（比如 MonsterMapper.xml）
+   1. 配置SQL，完成对monster表的crud
+** Java操作DB
+1. MonsterMapper.java接口 声明方法crud
+   1. 方法实现可以是注解方式
+   2. 方法也可以在对应的MonsterMapper.xml去完成
+2. 先创建Monster对象
+3. 通过MyBatis的mybatis-config文件获取到SessionFactory对象(可以理解成是连接池)
+4. 通过SessionFactory对象获取到SqlSession(可以理解成是连接)
+5. 获取到MonsterMapper的对象
+6. 调用MonsterMapper的方法，完成对monster表的各种操作
+**  MonsterMapper.xml
+#+begin_src xml
+  <mapper  namespace="接口的全类名">
+    <insert id="接口里面声明的方法" parameterType="方法形参类型的全类名">
+      INSERT INTO 
+      `monster` (`age`, `birthday`, `email`, `gender`, `name`, `salary`) 
+      VALUE (#{age}, #{birthday}, #{email}, #{gender}, #{gender}, #{name}, #{salary})
+    </insert>
+  </mapper>
+#+end_src
+** 添加语句，建议表名和字段名带上反引号
+** mybatis-config.xml
+#+begin_src xml
+  <mappers>
+    <mapper resource="通过菜单 Path from source root(全路径，类似全类名，但分隔符号是/)"/>
+  </mappers>
+#+end_src
+** 报错：找不到MonsterMapper.xml
+pom.xml
+#+begin_src xml
+  <!--    将资源文件，在build项目时导出到对应的target目录下-->
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/java</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                    <include>**/*.properties</include>
+                </includes>
+            </resource>
+        </resources>
+    </build>
+    
+#+end_src

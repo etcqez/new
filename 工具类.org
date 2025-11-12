@@ -1,0 +1,13 @@
+* MyBatis
+** MyBatisUtils
+#+begin_src java
+  public class MyBatisUtils {
+      private static SqlSessionFactory sqlSessionFactory;
+      //编写静态代码块-初始化sqlSessionFactory
+      static {
+  	String resource = "mybatis-config.xml";
+  	InputStream resourceAsStream = Resource.getResourceAsStream(resource);
+  	sqlSessionFactory = new SqlSessionFactoryBuilder().build(resourceAsStream);
+      }
+  }
+#+end_src

@@ -522,4 +522,9 @@ inadequate
 adj. 不足的
 frown
 v. 皱眉
-
+lodge
+v. 住宿
+formulate
+v. 规定
+subsidize
+v. 补贴
