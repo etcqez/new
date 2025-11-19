@@ -1,0 +1,526 @@
+** 配置文件
+*** webapp/WEB-INF/web.xml
+项目全局配置文件
+1. 指定spring配置文件位置，指定applicationContext.xml位置
+   #+begin_src xml
+     <context-param>
+       <param-name>contextConfigLocation</param-name>
+       <param-value>classpath:applicationContext.xml</param-value>
+     </context-param>
+
+    <!--
+        1. ContextLoaderListener监听器作用是启动Web容器时，自动装配ApplicationContext的配置信息
+        2. 它实现ServletContextListener接口，在web.xml配置该监听器，启动容器时，会默认执行它实现的方法
+    -->
+     <listener>
+       <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+     </listener>
+
+   #+end_src
+
+2. 配置前端控制器
+   #+begin_src xml
+     <!-- 因为没有指定springmvc配置文件，那么默认按照 servlet-name-servlet.xml来获取 -->
+     <servlet>
+       <servlet-name>springDispatcherServlet</servlet-name>
+       <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+       <load-on-startup>1</load-on-startup>
+     </servlet>
+
+     <servlet-mapping>
+       <servlet-name>springDispatcherServlet</servlet-name>
+       <url-pattern>/</url-pattern>
+     </servlet-mapping>
+
+   #+end_src
+
+3. 配置字符编码过滤器
+   #+begin_src xml
+     <!--解决中文乱码-->
+     <filter>
+       <filter-name>characterEncodingFilter</filter-name>
+       <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+       <init-param>
+         <param-name>encoding</param-name>
+         <param-value>utf-8</param-value>
+       </init-param>
+       <init-param>
+         <param-name>forceRequestEncoding</param-name>
+         <param-value>true</param-value>
+       </init-param>
+       <init-param>
+         <param-name>forceResponseEncoding</param-name>
+         <param-value>true</param-value>
+       </init-param>
+     </filter>
+
+     <filter-mapping>
+       <filter-name>characterEncodingFilter</filter-name>
+       <url-pattern>/*</url-pattern>
+     </filter-mapping>
+   #+end_src
+
+4. 配置隐藏方法过滤器
+   #+begin_src xml
+     <filter>
+       <filter-name>hiddenHttpMethodFilter</filter-name>
+       <filter-class>org.springframework.web.filter.HiddenHttpMethodFilter</filter-class>
+     </filter>
+
+     <filter-mapping>
+       <filter-name>hiddenHttpMethodFilter</filter-name>
+       <url-pattern>/*</url-pattern>
+     </filter-mapping>
+   #+end_src
+
+5. / 和 /* 的区别，/*会拦截静态资源
+
+*** webapp/WEB-INF/springDispatcherServlet-servlet.xml 默认名字 servlet-name-servlet.xml
+mvc配置文件
+1. 配置扫描控制器
+   #+begin_src xml
+     <context:component-scan base-package="org.example.furn" use-default-filters="false">
+       <!-- springmvc只扫描controller -->
+       <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+     </context:component-scan>
+   #+end_src
+2. 配置视图解析器
+   #+begin_src xml
+     <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+       <property name="prefix" value="/WEB-INF/views/"/>
+       <property name="suffix" value=".html"/>
+     </bean>
+   #+end_src
+3. 两个常规配置
+   #+begin_src xml
+     <!-- 支持springmvc的高级功能，比如JSR303校验，映射动态请求 -->
+     <mvc:default-servlet-handler/>
+     <!-- 将springmvc不能处理的请求，交给tomcat处理，比如css,js -->
+     <mvc:annotation-driven/>
+   #+end_src
+4. 测试 controller
+   #+begin_src java
+     @Controller
+     public class TestController {
+
+         @RequestMapping("/hi")
+         public String hi() {
+             System.out.println("TestController.hi");
+             return "hi";
+         }
+     }
+   #+end_src
+
+*** resources/applicationContext.xml
+spring配置文件
+1. 配置扫描包，但是不扫描控制器
+   #+begin_src xml
+    <context:component-scan base-package="org.example.furn">
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+   #+end_src
+2. 引入外部jdbc.properties文件，配置数据源
+   #+begin_src xml
+     <context:property-placeholder location="classpath:jdbc.properties"/>
+     <bean class="com.alibaba.druid.pool.DruidDataSource" id="pooledDataSource">
+       <property name="username" value="${jdbc.user}"/>
+       <property name="password" value="${jdbc.password}"/>
+       <property name="driverClassName" value="${jdbc.driver}"/>
+       <property name="url" value="${jdbc.url}"/>
+     </bean>
+   #+end_src
+3. 配置spring与mybatis的整合
+4. 配置事务管理器
+   #+begin_src xml
+     <!--配置事务-->
+     <!--一定要配置数据源属性，这样指定该事务管理器，是对哪个数据源进行事务控制-->
+     <bean class="org.springframework.jdbc.datasource.DataSourceTransactionManager" id="transactionManager">
+       <property name="dataSource" ref="pooledDataSource"/>
+     </bean>
+
+     <!--切入表达式-->
+     <aop:config>
+       <aop:pointcut id="txPoint" expression="execution(* org.example.furn.service..*(..))"/>
+
+       <!--给切入表达式分配事务规则-->
+       <aop:advisor advice-ref="txAdvice" pointcut-ref="txPoint"/>
+     </aop:config>
+
+     <!--事务规则-->
+     <tx:advice id="txAdvice">
+       <tx:attributes>
+         <!--*代表所有方法老师事务方法-->
+         <tx:method name="*"/>
+         <!--以get开始的所有方法，我们认为是只读，进行调优-->
+         <tx:method name="get*" read-only="true"/>
+       </tx:attributes>
+     </tx:advice>
+    #+end_src
+5. 测试
+   #+begin_src java
+     public class T1 {
+
+         @Test
+         public void t1() {
+
+     	ApplicationContext ioc = new ClassPathXmlApplicationContext("applicationContext.xml");
+
+     	System.out.println(ioc.getBean("pooledDataSource"));
+     	System.out.println(ioc.getBean("sqlSessionFactory"));
+         }
+   #+end_src
+*** resources/jdbc.properties
+#+begin_src conf
+  jdbc.user=root
+  jdbc.password=root
+  jdbc.url=jdbc:mysql://localhost:3306/furn_ssm?useSSL=false&useUnicode=true&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
+  jdbc.driver=com.mysql.jdbc.Driver
+#+end_src
+
+*** 配置spring与mybatis的整合
+1. 引入 mybatis整合到spring的适配库
+   #+begin_src xml
+     <!--引入mybatis整合spring的适配包-->
+     <dependency>
+       <groupId>org.mybatis</groupId>
+       <artifactId>mybatis-spring</artifactId>
+       <version>2.0.6</version>
+     </dependency>
+   #+end_src
+2. 指定mybatis配置文件位置，以及mapper位置
+   #+begin_src xml
+     <bean class="org.mybatis.spring.SqlSessionFactoryBean" id="sqlSessionFactory">
+       <!-- 指定mybatis配置文件位置 -->
+       <property name="configLocation" value="classpath:mybatis-config.xml"/>
+       <!-- 指定数据源 -->
+       <property name="dataSource" ref="pooledDataSource"/>
+       <!--指定mybatis的mapper文件位置-->
+       <property name="mapperLocations" value="classpath:mapper/*.xml"/>
+     </bean>
+   #+end_src
+3. 扫描mapper接口对象
+   #+begin_src xml
+     <!--配置扫描器，将mybatis接口的实现加入到ioc容器-->
+     <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+       <property name="basePackage" value="org.example.furn.dao"/>
+     </bean>
+   #+end_src
+
+*** resources/mybatis-config.xml
+#+begin_src xml
+  <settings>
+    <setting name="logImpl" value="STDOUT_LOGGING"/>
+  </settings>
+
+  <typeAliases>
+    <package name="org.example.furn.bean"/>
+  </typeAliases>
+#+end_src
+** 工具类
+1. StringUtils
+   #+begin_src java
+     if (StringUtils.hasText(imgPath)) {
+         this.imgPath = imgPath;
+     }
+   #+end_src
+** 重要的类
+1. Msg 用来返回 =json= 的数据的通用类
+   #+begin_src java
+     @Getter
+     @Setter
+     public class Msg {
+
+         private int code;
+         private String msg;
+         private Map<String, Object> extend = new HashMap<>();
+
+         //编写几个常用的方法
+         public static Msg success() {
+
+             Msg msg = new Msg();
+             msg.setCode(200);
+             msg.setMsg("success");
+             return msg;
+         }
+
+         public static Msg fail() {
+             Msg msg = new Msg();
+             msg.setCode(400);
+             msg.setMsg("fail");
+             return msg;
+         }
+
+         public Msg add(String key, Object value) {
+             extend.put(key, value);
+             return this;
+         }
+     }
+
+   #+end_src
+** mybatis逆向工程
+1. 引入mybatis逆向工程包
+   #+begin_src xml
+     <dependency>
+       <groupId>org.mybatis.generator</groupId>
+       <artifactId>mybatis-generator-core</artifactId>
+       <version>1.4.0</version>
+     </dependency>
+   #+end_src
+2. /mbg.xml 逆向工程配置文件
+   #+begin_src xml
+     <?xml version="1.0" encoding="UTF-8"?>
+     <!DOCTYPE generatorConfiguration
+     PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+     "https://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+
+     <generatorConfiguration>
+       <context id="DB2Tables" targetRuntime="MyBatis3">
+
+         <!--生成没有注释的bean-->
+         <commentGenerator>
+           <property name="suppressAllComments" value="true"/>
+         </commentGenerator>
+         <jdbcConnection driverClass="com.mysql.jdbc.Driver"
+                         connectionURL="jdbc:mysql://localhost:3306/furn_ssm?useSSL=false&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;allowPublicKeyRetrieval=true"
+                         userId="root"
+                         password="root">
+         </jdbcConnection>
+
+         <javaTypeResolver >
+           <property name="forceBigDecimals" value="false" />
+         </javaTypeResolver>
+
+         <!--javaBean生成位置-->
+         <javaModelGenerator targetPackage="org.example.furn.bean" targetProject="./src/main/java">
+           <property name="enableSubPackages" value="true" />
+           <property name="trimStrings" value="true" />
+         </javaModelGenerator>
+
+         <!--配置指定sql文件生成位置-->
+         <sqlMapGenerator targetPackage="mapper"  targetProject="./src/main/resources">
+           <property name="enableSubPackages" value="true" />
+         </sqlMapGenerator>
+
+         <!--指定dao接口生成的位置，也就是mapper接口-->
+         <javaClientGenerator type="XMLMAPPER" targetPackage="org.example.furn.dao"  targetProject="./src/main/java">
+           <property name="enableSubPackages" value="true" />
+         </javaClientGenerator>
+
+         <table tableName="furn" domainObjectName="Furn"></table>
+       </context>
+     </generatorConfiguration>
+   #+end_src
+3. 测试
+   #+begin_src java
+     public class MBGTest {
+
+         @Test
+         public void generator() throws Exception {
+             List<String> warnings = new ArrayList<String>();
+             boolean overwrite = true;
+             //如果这样访问，需要将文件放在 项目下
+             File configFile = new File("mbg.xml");
+             ConfigurationParser cp = new ConfigurationParser(warnings);
+             Configuration config = cp.parseConfiguration(configFile);
+             DefaultShellCallback callback = new DefaultShellCallback(overwrite);
+             MyBatisGenerator myBatisGenerator = new MyBatisGenerator(config, callback, warnings);
+             myBatisGenerator.generate(null);
+         }
+     }
+   #+end_src
+4. 测试插入数据
+   #+begin_src java
+     public class FurnMapperTest {
+
+         @Test
+         public void insertSelective() {
+
+             ApplicationContext ioc = new ClassPathXmlApplicationContext("applicationContext.xml");
+             FurnMapper furnMapper = ioc.getBean(FurnMapper.class);
+     	//        System.out.println("furnMapper = " + furnMapper.getClass());
+             Furn furn = new Furn(null, "沙发~~", "松鼠家居", new BigDecimal(180), 888, 10, "assets/img_01");
+     	int affected = furnMapper.insertSelective(furn);
+             System.out.println("affected = " + affected);
+             System.out.println("操作成功");
+         }
+     }
+   #+end_src
+** 搭建vue前端工程
+*** 版本
+1. node 14
+*** 步骤
+1. npm install -g @vue/cli
+   需要权限
+2. vue create ssm_vue
+3. 使用idea打开项目
+4. 点击 Add Configuration
+5. npm run server
+6. npm i axios -S
+*** axios工具类
+#+begin_src js
+  import axios from "axios";
+
+  // 通过axios创建request对象，用于发送请求到后端
+  const request = axios.create({
+      timeout: 5000
+  })
+
+  //request拦截器的处理
+  //可以对请求做统一的处理
+  //比如统一的的加入token, Content-Type
+  request.interceptors.request.use(config => {
+      config.headers['Content-Type'] = 'application/json;charset=utf-8'
+      return config
+  }, error => {
+      return Promise.reject(error)
+  })
+
+  export default request
+
+  //response拦截器
+  //在调用接口响应后，统一的处理返回结果
+  request.interceptors.response.use(response => {
+      let res = response.data
+      //如果返回的是文件
+      if (response.config.responseType === 'blob') {
+          return res
+      }
+      //如果是string，就转成json对象
+      if (typeof res === 'string') {
+          res = res ? JSON.parse(res) : res
+      }
+      return res;
+  }, error => {
+      console.log('err', error)
+      return Promise.reject(error)
+  })
+#+end_src
+*** 跨域问题
+**** 什么是跨域问题
+1. 如果当前的url是localhost:10000，但是请求的后台(服务器)是localhost:8080，浏览器认为属于不同源，会阻止请求发出
+2. 是谁阻止了请求
+   浏览器认为跨域太危险了，阻止了请求
+**** 解决方案
+1. vue.config.js
+   #+begin_src js
+     proxy: {
+         '/api': { //设置拦截器 拦截器格式 斜杠+拦截器名字，名字可以自己定
+     	target: 'http://localhost:8080/ssm',
+     	changeOrigin: true, //设置同源
+     	pathRewrite: {
+     	    '/api':'' //选择忽略拦截器里面的单词
+     	}
+   #+end_src
+*** 添加家居
+#+begin_src js
+  request.post("/api/save", this.form).then(res => {
+      console.log("res-", res)
+      this.dialogVisible = false
+
+      //添加完成后刷新数据
+      this.list()
+  })
+#+end_src
+*** 显示家居
+1. 编写方法，返回家居信息
+   #+begin_src js
+     list() {
+         request.get("/api/furns").then(res => {
+     	console.log("res-", res)
+     	//根据console输出的数据结构来查看
+     	this.tableData = res.extend.furnList
+         })
+     }
+   #+end_src
+2. 触发时机 created
+   这个阶段组件的data和method中的方法已初始化结束，可以访问，但是dom结构未初始化，页面未渲染
+   #+begin_src js
+     created() {
+         this.list()
+     },
+   #+end_src
+3. 为什么是res.extend.furnList
+   1. 后端的代码
+      #+begin_src java
+	private Map<String, Object> extend = new HashMap<>();
+	// msg 的属性 是一个值为 Object 类型的Map，存放的是 furnList
+
+	msg.add("furnList", furnList);
+	// add方法 将furnList添加到map，键为"furnList"，值为 furnList
+      #+end_src
+
+   2. 所以 furnList就是map的键，值是一个列表，说明Object类型是可以存放一个列表的
+*** 修改家居
+**** 回显家居
+1. 给编辑按钮绑定个修改方法
+   #+begin_src js
+         <template #default="scope">
+         <el-button type="text" @click="handleEdit(scope.row)">编辑</el-button>
+   #+end_src
+   scope.row 表示当前行数据
+2. handleEdit 方法 将当前的家居信息绑定到弹出对话框
+   有二种方法
+   1. 可以通过row.id 到后端去获取对应的家居信息，返回后将其绑定 this.form
+      #+begin_src js
+	handleEdit(row) {
+
+	    // 第二种方式
+	    request.get("/api/" + row.id).then(res => {
+		console.log("res", res)
+		this.form = res.extend.furn
+		this.dialogVisible = true
+	    })
+	}
+      #+end_src
+   2. 把获取的row的数据通过处理，绑定到this.form 进行显示
+      #+begin_src js
+	handleEdit(row) {
+	    // console.log('row--',row)
+
+	    //JSON.stringify(row)将row转成json字符串
+	    //JSON.parse(JSON.stringify(row))
+	    //将json字符串转成json对象
+	    this.form = JSON.parse(JSON.stringify(row))
+	    this.dialogVisible = true
+	}
+      #+end_src
+**** 提交修改
+1. 需要判断是新增，还是编辑弹出的对话框
+   通过this.form.id判断
+2. 将当前表单的数据发送到后端
+   #+begin_src js
+     save() {//将填写的表单数据，发送给后端
+
+         if (this.form.id) {//表示修改
+     	request.put("/api/update", this.form).then(res => {
+     	    if (res.code == 200) {//修改成功
+
+     	    }
+     	})
+
+         }
+   #+end_src
+3. 根据结果状态，显示弹窗
+   #+begin_src js
+     save() {//将填写的表单数据，发送给后端
+
+         if (this.form.id) {//表示修改
+     	request.put("/api/update", this.form).then(res => {
+     	    if (res.code === 200) {//修改成功
+     		//提示一个成功的消息框
+     		this.$message(
+     		    {
+     			type: "success",
+     			message: "更新成功"
+     		    }
+     		)
+     	    } else {
+     		this.$message(
+     		    {
+     			type: "error",
+     			message: "更新失败"
+     		    }
+     		)
+     	    }
+   #+end_src
+**** TODO 修改家居注意事项
